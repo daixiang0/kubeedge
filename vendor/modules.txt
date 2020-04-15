@@ -130,6 +130,7 @@ github.com/cyphar/filepath-securejoin
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
 # github.com/dgrijalva/jwt-go v3.2.0+incompatible
+## explicit
 github.com/dgrijalva/jwt-go
 # github.com/docker/distribution v2.7.1+incompatible
 github.com/docker/distribution/digestset
@@ -863,6 +864,7 @@ k8s.io/apimachinery/third_party/forked/golang/json
 k8s.io/apimachinery/third_party/forked/golang/netutil
 k8s.io/apimachinery/third_party/forked/golang/reflect
 # k8s.io/apiserver v0.17.1
+## explicit
 k8s.io/apiserver/pkg/admission
 k8s.io/apiserver/pkg/apis/apiserver
 k8s.io/apiserver/pkg/apis/apiserver/v1
@@ -878,7 +880,6 @@ k8s.io/apiserver/pkg/endpoints/handlers/negotiation
 k8s.io/apiserver/pkg/endpoints/handlers/responsewriters
 k8s.io/apiserver/pkg/endpoints/metrics
 k8s.io/apiserver/pkg/endpoints/request
-## explicit
 k8s.io/apiserver/pkg/features
 k8s.io/apiserver/pkg/registry/rest
 k8s.io/apiserver/pkg/server/healthz
