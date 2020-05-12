@@ -338,10 +338,12 @@ func TestCheckConfirm(t *testing.T) {
 			cw := CommWorker{
 				Worker: test.Worker,
 			}
-			cw.checkConfirm(test.context, test.msg)
+			if _, err := cw.checkConfirm(test.context, test.msg); err != nil {
+				t.Errorf("checkConfirm() failed : %v", err)
+			}
 			_, exist := test.context.ConfirmMap.Load("actionMessage")
 			if !exist {
-				t.Errorf(" checkconfirm() failed because dealSendToCloud() failed to store message in ConfirmMap")
+				t.Errorf(" checkConfirm() failed because dealSendToCloud() failed to store message in ConfirmMap")
 				return
 			}
 		})

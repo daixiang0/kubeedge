@@ -96,7 +96,9 @@ func (qcc *QuicClient) Send(message model.Message) error {
 //Receive reads the binary message through the connection
 func (qcc *QuicClient) Receive() (model.Message, error) {
 	message := model.Message{}
-	qcc.client.ReadMessage(&message)
+	if err := qcc.client.ReadMessage(&message); err != nil {
+		return message, err
+	}
 	return message, nil
 }
 

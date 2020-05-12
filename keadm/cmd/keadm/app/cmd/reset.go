@@ -85,6 +85,8 @@ func TearDownKubeEdge(isEdgeNode bool) error {
 		ke = &util.KubeEdgeInstTool{Common: util.Common{}}
 	}
 
-	ke.TearDown()
+	if err := ke.TearDown(); err != nil {
+		return err
+	}
 	return nil
 }

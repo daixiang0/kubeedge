@@ -71,7 +71,9 @@ func DeviceTwinToMsgTwin(deviceTwins []dtclient.DeviceTwin) map[string]*MsgTwin 
 		if expected != "" {
 			expectedValue := &TwinValue{Value: &expected}
 			if twin.ExpectedMeta != "" {
-				json.Unmarshal([]byte(twin.ExpectedMeta), &expectedMeta)
+				if err := json.Unmarshal([]byte(twin.ExpectedMeta), &expectedMeta); err != nil {
+
+				}
 				expectedValue.Metadata = &expectedMeta
 			}
 			msgTwin.Expected = expectedValue
@@ -79,17 +81,23 @@ func DeviceTwinToMsgTwin(deviceTwins []dtclient.DeviceTwin) map[string]*MsgTwin 
 		if actual != "" {
 			actualValue := &TwinValue{Value: &actual}
 			if twin.ActualMeta != "" {
-				json.Unmarshal([]byte(twin.ActualMeta), &actualMeta)
+				if err := json.Unmarshal([]byte(twin.ActualMeta), &actualMeta); err != nil {
+
+				}
 			}
 			msgTwin.Actual = actualValue
 		}
 
 		if twin.ExpectedVersion != "" {
-			json.Unmarshal([]byte(twin.ExpectedVersion), &expectedVersion)
+			if err := json.Unmarshal([]byte(twin.ExpectedVersion), &expectedVersion); err != nil {
+
+			}
 			msgTwin.ExpectedVersion = &expectedVersion
 		}
 		if twin.ActualVersion != "" {
-			json.Unmarshal([]byte(twin.ActualVersion), &actualVersion)
+			if err := json.Unmarshal([]byte(twin.ActualVersion), &actualVersion); err != nil {
+
+			}
 			msgTwin.ActualVersion = &actualVersion
 		}
 		msgTwins[twin.Name] = msgTwin
@@ -117,7 +125,7 @@ func MsgAttrToDeviceAttr(name string, msgAttr *MsgAttr) dtclient.DeviceAttr {
 func CopyMsgTwin(msgTwin *MsgTwin, noVersion bool) MsgTwin {
 	var result MsgTwin
 	payload, _ := json.Marshal(msgTwin)
-	json.Unmarshal(payload, &result)
+	_ = json.Unmarshal(payload, &result)
 	if noVersion {
 		result.ActualVersion = nil
 		result.ExpectedVersion = nil
@@ -129,7 +137,7 @@ func CopyMsgTwin(msgTwin *MsgTwin, noVersion bool) MsgTwin {
 func CopyMsgAttr(msgAttr *MsgAttr) MsgAttr {
 	var result MsgAttr
 	payload, _ := json.Marshal(msgAttr)
-	json.Unmarshal(payload, &result)
+	_ = json.Unmarshal(payload, &result)
 	return result
 }
 

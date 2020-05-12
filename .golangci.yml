@@ -46,6 +46,7 @@ linters:
   disable-all: true
   enable:
     - goconst
+    - errcheck
     - gofmt
     - golint
     - gosimple

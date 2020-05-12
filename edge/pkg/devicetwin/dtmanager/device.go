@@ -107,16 +107,18 @@ func dealDeviceStateUpdate(context *dtcontext.DTContext, resource string, msg in
 
 	}
 	topic := dtcommon.DeviceETPrefix + device.ID + dtcommon.DeviceETStateUpdateSuffix + "/result"
-	context.Send(device.ID,
-		dtcommon.SendToEdge,
-		dtcommon.CommModule,
-		context.BuildModelMessage(modules.BusGroup, "", topic, "publish", payload))
+	if err = context.Send(device.ID, dtcommon.SendToEdge, dtcommon.CommModule,
+		context.BuildModelMessage(modules.BusGroup, "",
+			topic, "publish", payload)); err != nil {
+		return nil, err
+	}
 
 	msgResource := "device/" + device.ID + "/state"
-	context.Send(deviceID,
-		dtcommon.SendToCloud,
-		dtcommon.CommModule,
-		context.BuildModelMessage("resource", "", msgResource, "update", string(payload)))
+	if err = context.Send(deviceID, dtcommon.SendToCloud, dtcommon.CommModule,
+		context.BuildModelMessage("resource", "",
+			msgResource, "update", string(payload))); err != nil {
+		return nil, err
+	}
 	return nil, nil
 }
 
@@ -135,7 +137,9 @@ func dealDeviceUpdated(context *dtcontext.DTContext, resource string, msg interf
 	deviceID := resource
 
 	context.Lock(deviceID)
-	DeviceUpdated(context, deviceID, updateDevice.Attributes, dttype.BaseMessage{EventID: updateDevice.EventID}, 0)
+	if _, err := DeviceUpdated(context, deviceID, updateDevice.Attributes, dttype.BaseMessage{EventID: updateDevice.EventID}, 0); err != nil {
+		return nil, err
+	}
 	context.Unlock(deviceID)
 	return nil, nil
 }
@@ -166,7 +170,7 @@ func DeviceUpdated(context *dtcontext.DTContext, deviceID string, attributes map
 		baseMessage.Timestamp = now
 
 		if err != nil {
-			SyncDeviceFromSqlite(context, deviceID)
+			_ = SyncDeviceFromSqlite(context, deviceID)
 			klog.Errorf("Update device failed due to writing sql error: %v", err)
 		} else {
 			klog.Infof("Send update attributes of device %s event to edge app", deviceID)
@@ -176,8 +180,11 @@ func DeviceUpdated(context *dtcontext.DTContext, deviceID string, attributes map
 				klog.Errorf("Build device attribute update failed: %v", err)
 			}
 			topic := dtcommon.DeviceETPrefix + deviceID + dtcommon.DeviceETUpdatedSuffix
-			context.Send(deviceID, dtcommon.SendToEdge, dtcommon.CommModule,
-				context.BuildModelMessage(modules.BusGroup, "", topic, "publish", payload))
+			if err := context.Send(deviceID, dtcommon.SendToEdge, dtcommon.CommModule,
+				context.BuildModelMessage(modules.BusGroup, "",
+					topic, "publish", payload)); err != nil {
+				return nil, err
+			}
 		}
 	}
 

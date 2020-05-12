@@ -69,7 +69,7 @@ func StartHTTPServer() {
 // getCA returns the caCertDER
 func getCA(w http.ResponseWriter, r *http.Request) {
 	caCertDER := hubconfig.Config.Ca
-	w.Write(caCertDER)
+	_, _ = w.Write(caCertDER)
 }
 
 //electionHandler returns the status whether the cloudcore is ready
@@ -98,13 +98,13 @@ func edgeCoreClientCert(w http.ResponseWriter, r *http.Request) {
 	authorizationHeader := r.Header.Get("authorization")
 	if authorizationHeader == "" {
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte(fmt.Sprintf("Invalid authorization token")))
+		_, _ = w.Write([]byte(fmt.Sprintf("Invalid authorization token")))
 		return
 	}
 	bearerToken := strings.Split(authorizationHeader, " ")
 	if len(bearerToken) != 2 {
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte(fmt.Sprintf("Invalid authorization token")))
+		_, _ = w.Write([]byte(fmt.Sprintf("Invalid authorization token")))
 		return
 	}
 	token, err := jwt.Parse(bearerToken[1], func(token *jwt.Token) (interface{}, error) {
@@ -117,16 +117,26 @@ func edgeCoreClientCert(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if err == jwt.ErrSignatureInvalid {
 			w.WriteHeader(http.StatusUnauthorized)
-			w.Write([]byte(fmt.Sprintf("Invalid authorization token")))
+			if _, err := w.Write([]byte(fmt.Sprintf("Invalid authorization token"))); err != nil {
+				klog.Errorf("Wrire body error %v", err)
+				return
+			}
 			return
 		}
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(fmt.Sprintf("Invalid authorization token")))
+		if _, err := w.Write([]byte(fmt.Sprintf("Invalid authorization token"))); err != nil {
+			klog.Errorf("Wrire body error %v", err)
+			return
+		}
+
 		return
 	}
 	if !token.Valid {
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte(fmt.Sprintf("Invalid authorization token")))
+		if _, err := w.Write([]byte(fmt.Sprintf("Invalid authorization token"))); err != nil {
+			klog.Errorf("Wrire body error %v", err)
+			return
+		}
 		return
 	}
 
@@ -144,7 +154,9 @@ func edgeCoreClientCert(w http.ResponseWriter, r *http.Request) {
 		klog.Errorf("fail to signCerts! error:%v", err)
 	}
 
-	w.Write(clientCertDER)
+	if _, err := w.Write(clientCertDER); err != nil {
+		klog.Errorf("wrire error %v", err)
+	}
 }
 
 // signCerts will create a certificate for EdgeCore

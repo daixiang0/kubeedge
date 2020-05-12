@@ -125,7 +125,10 @@ func startDNS() {
 			klog.Warningf("[EdgeMesh] failed to resolve dns: %v", err)
 			continue
 		}
-		dnsConn.WriteTo(rsp, from)
+		if _, err = dnsConn.WriteTo(rsp, from); err != nil {
+			klog.Warningf("[EdgeMesh] failed to write: %v", err)
+			continue
+		}
 	}
 }
 
@@ -330,7 +333,9 @@ func getFromRealDNS(req []byte, from *net.UDPAddr) {
 
 		if n > 0 {
 			rsp = append(rsp, buf[:n]...)
-			dnsConn.WriteToUDP(rsp, from)
+			if _, err = dnsConn.WriteToUDP(rsp, from); err != nil {
+				continue
+			}
 			break
 		}
 	}

@@ -156,7 +156,9 @@ func dealMerbershipGet(context *dtcontext.DTContext, resource string, msg interf
 		return nil, errors.New("assertion failed")
 	}
 
-	DealGetMembership(context, contentData)
+	if err := DealGetMembership(context, contentData); err != nil {
+		return nil, err
+	}
 	return nil, nil
 }
 
@@ -181,8 +183,12 @@ func Added(context *dtcontext.DTContext, toAdd []dttype.Device, baseMessage dtty
 				klog.Errorf("Add device %s failed, has existed", device.ID)
 				continue
 			}
-			DeviceUpdated(context, device.ID, device.Attributes, baseMessage, dealType)
-			DealDeviceTwin(context, device.ID, baseMessage.EventID, device.Twin, dealType)
+			if _, err := DeviceUpdated(context, device.ID, device.Attributes, baseMessage, dealType); err != nil {
+
+			}
+			if err := DealDeviceTwin(context, device.ID, baseMessage.EventID, device.Twin, dealType); err != nil {
+
+			}
 			//todo sync twin
 			continue
 		}
@@ -224,12 +230,16 @@ func Added(context *dtcontext.DTContext, toAdd []dttype.Device, baseMessage dtty
 		}
 		if device.Twin != nil {
 			klog.Infof("Add device twin during first adding device %s", device.ID)
-			DealDeviceTwin(context, device.ID, baseMessage.EventID, device.Twin, dealType)
+			if err := DealDeviceTwin(context, device.ID, baseMessage.EventID, device.Twin, dealType); err != nil {
+
+			}
 		}
 
 		if device.Attributes != nil {
 			klog.Infof("Add device attr during first adding device %s", device.ID)
-			DeviceUpdated(context, device.ID, device.Attributes, baseMessage, dealType)
+			if _, err := DeviceUpdated(context, device.ID, device.Attributes, baseMessage, dealType); err != nil {
+
+			}
 		}
 		topic := dtcommon.MemETPrefix + context.NodeName + dtcommon.MemETUpdateSuffix
 		baseMessage := dttype.BuildBaseMessage()
@@ -240,10 +250,10 @@ func Added(context *dtcontext.DTContext, toAdd []dttype.Device, baseMessage dtty
 		if err != nil {
 
 		} else {
-			context.Send("",
-				dtcommon.SendToEdge,
-				dtcommon.CommModule,
-				context.BuildModelMessage(modules.BusGroup, "", topic, "publish", result))
+			if err := context.Send("", dtcommon.SendToEdge, dtcommon.CommModule,
+				context.BuildModelMessage(modules.BusGroup, "", topic, "publish", result)); err != nil {
+
+			}
 		}
 		if delta {
 			context.Unlock(device.ID)
@@ -294,10 +304,10 @@ func Removed(context *dtcontext.DTContext, toRemove []dttype.Device, baseMessage
 		if err != nil {
 
 		} else {
-			context.Send("",
-				dtcommon.SendToEdge,
-				dtcommon.CommModule,
-				context.BuildModelMessage(modules.BusGroup, "", topic, "publish", result))
+			if err := context.Send("", dtcommon.SendToEdge, dtcommon.CommModule,
+				context.BuildModelMessage(modules.BusGroup, "", topic, "publish", result)); err != nil {
+				klog.Errorf("Send fail;failed: %v", err)
+			}
 		}
 
 		klog.Infof("Remove device %s successful", device.ID)
@@ -343,10 +353,10 @@ func DealGetMembership(context *dtcontext.DTContext, payload []byte) error {
 	topic := dtcommon.MemETPrefix + context.NodeName + dtcommon.MemETGetResultSuffix
 	klog.Infof("Deal getting membership successful and send the result")
 
-	context.Send("",
-		dtcommon.SendToEdge,
-		dtcommon.CommModule,
-		context.BuildModelMessage(modules.BusGroup, "", topic, "publish", result))
+	if err := context.Send("", dtcommon.SendToEdge, dtcommon.CommModule,
+		context.BuildModelMessage(modules.BusGroup, "", topic, "publish", result)); err != nil {
+		return err
+	}
 
 	return nil
 }

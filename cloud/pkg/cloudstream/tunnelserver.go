@@ -51,7 +51,7 @@ func newTunnelServer() *TunnelServer {
 			ReadBufferSize:   1024,
 			Error: func(w http.ResponseWriter, r *http.Request, status int, reason error) {
 				w.WriteHeader(status)
-				w.Write([]byte(reason.Error()))
+				_, _ = w.Write([]byte(reason.Error()))
 			},
 		},
 	}

@@ -57,9 +57,15 @@ func (dc *DeviceController) Start() {
 		os.Exit(1)
 	}
 
-	downstream.Start()
+	if err := downstream.Start(); err != nil {
+		klog.Errorf("start downstream failed with error: %s", err)
+		os.Exit(1)
+	}
 	// wait for downstream controller to start and load deviceModels and devices
 	// TODO think about sync
 	time.Sleep(1 * time.Second)
-	upstream.Start()
+	if err := upstream.Start(); err != nil {
+		klog.Errorf("start upstream failed with error: %s", err)
+		os.Exit(1)
+	}
 }

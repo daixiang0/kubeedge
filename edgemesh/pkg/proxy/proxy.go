@@ -150,13 +150,13 @@ func (p *Proxier) readAndCleanRule() {
 	for scan.Scan() {
 		serverString := scan.Text()
 		if strings.Contains(serverString, "-o") {
-			p.iptables.DeleteRule(utiliptables.TableNAT, utiliptables.ChainOutput, strings.Split(serverString, " ")...)
+			_ = p.iptables.DeleteRule(utiliptables.TableNAT, utiliptables.ChainOutput, strings.Split(serverString, " ")...)
 		} else if strings.Contains(serverString, "-i") {
-			p.iptables.DeleteRule(utiliptables.TableNAT, utiliptables.ChainPrerouting, strings.Split(serverString, " ")...)
+			_ = p.iptables.DeleteRule(utiliptables.TableNAT, utiliptables.ChainPrerouting, strings.Split(serverString, " ")...)
 		}
 	}
-	p.iptables.FlushChain(utiliptables.TableNAT, meshChain)
-	p.iptables.DeleteChain(utiliptables.TableNAT, meshChain)
+	_ = p.iptables.FlushChain(utiliptables.TableNAT, meshChain)
+	_ = p.iptables.DeleteChain(utiliptables.TableNAT, meshChain)
 }
 
 // ensureResolvForHost adds edgemesh dns server to the head of /etc/resolv.conf
@@ -170,7 +170,9 @@ func ensureResolvForHost() {
 	resolv := strings.Split(string(bs), "\n")
 	if resolv == nil {
 		nameserver := "nameserver " + config.Config.ListenIP.String()
-		ioutil.WriteFile(hostResolv, []byte(nameserver), 0600)
+		if err := ioutil.WriteFile(hostResolv, []byte(nameserver), 0600); err != nil {
+			klog.Errorf("[EdgeMesh] write file %s err: %v", hostResolv, err)
+		}
 		return
 	}
 
@@ -193,7 +195,9 @@ func ensureResolvForHost() {
 	if configured {
 		if dnsIdx != startIdx && dnsIdx > startIdx {
 			nameserver := sortNameserver(resolv, dnsIdx, startIdx)
-			ioutil.WriteFile(hostResolv, []byte(nameserver), 0600)
+			if err := ioutil.WriteFile(hostResolv, []byte(nameserver), 0600); err != nil {
+				return
+			}
 		}
 		return
 	}
@@ -209,7 +213,9 @@ func ensureResolvForHost() {
 		idx++
 	}
 
-	ioutil.WriteFile(hostResolv, []byte(nameserver), 0600)
+	if err := ioutil.WriteFile(hostResolv, []byte(nameserver), 0600); err != nil {
+
+	}
 }
 
 func sortNameserver(resolv []string, dnsIdx, startIdx int) string {
@@ -232,7 +238,9 @@ func sortNameserver(resolv []string, dnsIdx, startIdx int) string {
 
 func Clean() {
 	proxier.readAndCleanRule()
-	netlink.RouteDel(&route)
+	if err := netlink.RouteDel(&route); err != nil {
+		klog.Warningf("[EdgeMesh] delete route err: %v", err)
+	}
 	bs, err := ioutil.ReadFile(hostResolv)
 	if err != nil {
 		klog.Warningf("[EdgeMesh] read file %s err: %v", hostResolv, err)
@@ -249,5 +257,7 @@ func Clean() {
 		}
 		nameserver = nameserver + item + "\n"
 	}
-	ioutil.WriteFile(hostResolv, []byte(nameserver), 0600)
+	if err := ioutil.WriteFile(hostResolv, []byte(nameserver), 0600); err != nil {
+		klog.Errorf("[EdgeMesh] write file %s err: %v", hostResolv, err)
+	}
 }

@@ -405,7 +405,9 @@ func (mh *MessageHandle) handleMessage(nodeQueue workqueue.RateLimitingInterface
 	if msgType == "listMessage" {
 		mh.send(hi, info, msg)
 		// delete successfully sent events from the queue/store
-		nodeStore.Delete(msg)
+		if err := nodeStore.Delete(msg); err != nil {
+			return
+		}
 	} else {
 		mh.sendMsg(hi, info, msg, copyMsg, nodeStore)
 	}
@@ -464,7 +466,9 @@ func (mh *MessageHandle) saveSuccessPoint(msg *beehiveModel.Message, info *model
 		objectSyncName := synccontroller.BuildObjectSyncName(info.NodeID, resourceUID)
 
 		if msg.GetOperation() == beehiveModel.DeleteOperation {
-			nodeStore.Delete(msg)
+			if err := nodeStore.Delete(msg); err != nil {
+				return
+			}
 			mh.deleteSuccessPoint(resourceNamespace, objectSyncName)
 			return
 		}
@@ -499,7 +503,10 @@ func (mh *MessageHandle) saveSuccessPoint(msg *beehiveModel.Message, info *model
 				klog.Errorf("Failed to get objectSync: %s, err: %v", objectSyncName, err)
 			}
 			objectSyncStatus.Status.ObjectResourceVersion = msg.GetResourceVersion()
-			mh.MessageQueue.ObjectSyncController.CrdClient.ReliablesyncsV1alpha1().ObjectSyncs(resourceNamespace).UpdateStatus(objectSyncStatus)
+			if _, err := mh.MessageQueue.ObjectSyncController.CrdClient.ReliablesyncsV1alpha1().
+				ObjectSyncs(resourceNamespace).UpdateStatus(objectSyncStatus); err != nil {
+				klog.Errorf("Failed to update objectSync: %s, err: %v", objectSyncName, err)
+			}
 		}
 	}
 
@@ -510,7 +517,10 @@ func (mh *MessageHandle) saveSuccessPoint(msg *beehiveModel.Message, info *model
 }
 
 func (mh *MessageHandle) deleteSuccessPoint(resourceNamespace, objectSyncName string) {
-	mh.MessageQueue.ObjectSyncController.CrdClient.ReliablesyncsV1alpha1().ObjectSyncs(resourceNamespace).Delete(objectSyncName, metav1.NewDeleteOptions(0))
+	if err := mh.MessageQueue.ObjectSyncController.CrdClient.ReliablesyncsV1alpha1().
+		ObjectSyncs(resourceNamespace).Delete(objectSyncName, metav1.NewDeleteOptions(0)); err != nil {
+		klog.Errorf("Delete Success Point failed with error: %v", err)
+	}
 }
 
 func deepcopy(msg *beehiveModel.Message) *beehiveModel.Message {

@@ -51,12 +51,19 @@ func (ec *EdgeController) Start() {
 		klog.Errorf("new upstream controller failed with error: %s", err)
 		os.Exit(1)
 	}
-	upstream.Start()
+
+	if err := upstream.Start(); err != nil {
+		klog.Errorf("start upstream failed with error: %s", err)
+		os.Exit(1)
+	}
 
 	downstream, err := controller.NewDownstreamController()
 	if err != nil {
 		klog.Warningf("new downstream controller failed with error: %s", err)
 		os.Exit(1)
 	}
-	downstream.Start()
+	if err := downstream.Start(); err != nil {
+		klog.Errorf("start downstream failed with error: %s", err)
+		os.Exit(1)
+	}
 }

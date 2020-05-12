@@ -1,6 +1,7 @@
 package plugin
 
 import (
+	"fmt"
 	"github.com/go-chassis/go-archaius"
 	"github.com/go-chassis/go-chassis/control"
 	"github.com/go-chassis/go-chassis/core/config"
@@ -41,7 +42,11 @@ func Install() {
 		Infra:   config.GlobalDefinition.Panel.Infra,
 		Address: config.GlobalDefinition.Panel.Settings["address"],
 	}
-	control.Init(opts)
+	if err := control.Init(opts); err != nil {
+		_ = fmt.Errorf("failed to init control: %v", err)
+	}
 	// init archaius
-	archaius.Init()
+	if err := archaius.Init(); err != nil {
+		_ = fmt.Errorf("failed to init arahaius: %v", err)
+	}
 }

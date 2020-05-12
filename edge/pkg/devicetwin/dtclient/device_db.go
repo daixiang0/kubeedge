@@ -89,13 +89,15 @@ func UpdateDeviceMulti(updates []DeviceUpdate) error {
 func AddDeviceTrans(adds []Device, addAttrs []DeviceAttr, addTwins []DeviceTwin) error {
 	var err error
 	obm := dbm.DBAccess
-	obm.Begin()
+	if err = obm.Begin(); err != nil {
+		return err
+	}
 	for _, add := range adds {
 		err = SaveDevice(&add)
 
 		if err != nil {
 			klog.Errorf("save device failed: %v", err)
-			obm.Rollback()
+			_ = obm.Rollback()
 			return err
 		}
 	}
@@ -103,7 +105,7 @@ func AddDeviceTrans(adds []Device, addAttrs []DeviceAttr, addTwins []DeviceTwin)
 	for _, attr := range addAttrs {
 		err = SaveDeviceAttr(&attr)
 		if err != nil {
-			obm.Rollback()
+			_ = obm.Rollback()
 			return err
 		}
 	}
@@ -111,11 +113,13 @@ func AddDeviceTrans(adds []Device, addAttrs []DeviceAttr, addTwins []DeviceTwin)
 	for _, twin := range addTwins {
 		err = SaveDeviceTwin(&twin)
 		if err != nil {
-			obm.Rollback()
+			_ = obm.Rollback()
 			return err
 		}
 	}
-	obm.Commit()
+	if err = obm.Commit(); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -123,24 +127,28 @@ func AddDeviceTrans(adds []Device, addAttrs []DeviceAttr, addTwins []DeviceTwin)
 func DeleteDeviceTrans(deletes []string) error {
 	var err error
 	obm := dbm.DBAccess
-	obm.Begin()
+	if err = obm.Begin(); err != nil {
+		return err
+	}
 	for _, delete := range deletes {
 		err = DeleteDeviceByID(delete)
 		if err != nil {
-			obm.Rollback()
+			_ = obm.Rollback()
 			return err
 		}
 		err = DeleteDeviceAttrByDeviceID(delete)
 		if err != nil {
-			obm.Rollback()
+			_ = obm.Rollback()
 			return err
 		}
 		err = DeleteDeviceTwinByDeviceID(delete)
 		if err != nil {
-			obm.Rollback()
+			_ = obm.Rollback()
 			return err
 		}
 	}
-	obm.Commit()
+	if err = obm.Commit(); err != nil {
+		return err
+	}
 	return nil
 }
