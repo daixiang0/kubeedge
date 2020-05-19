@@ -20,16 +20,16 @@ define BINARY_HELP_INFO
 #
 # Example:
 #   make
-#   make build
-#   make build HELP=y
-#   make build WHAT=cloudcore
+#   make all
+#   make all HELP=y
+#   make all WHAT=cloudcore
 endef
-.PHONY: build
+.PHONY: all
 ifeq ($(HELP),y)
-build: clean
+all: clean
 	@echo "$$BINARY_HELP_INFO"
 else
-build: verify-golang
+all: verify-golang
 	hack/make-rules/build.sh $(WHAT)
 endif
 
@@ -127,7 +127,7 @@ define CROSSBUILD_HELP_INFO
 #         If not specified, "everything" will be built.
 #
 # ARCH: go arch value, now support: $(ARCH_VALUES)
-#       If not specified ,default use ARCH=amd64 
+#       If not specified ,default use ARCH=amd64
 #
 #
 # Example:
