@@ -6,7 +6,7 @@ FROM ${BUILD_FROM} AS builder
 ARG GO_LDFLAGS
 ARG QEMU_ARCH=x86_64
 
-COPY ./build/edge/tmp/qemu-${QEMU_ARCH}-static /usr/bin/
+COPY ./build/edgecore/tmp/qemu-${QEMU_ARCH}-static /usr/bin/
 COPY . /go/src/github.com/kubeedge/kubeedge
 
 RUN apk --no-cache update && \
