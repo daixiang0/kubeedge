@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
+	"k8s.io/klog"
 )
 
 //UnmarshalMembershipDetail Unmarshal membershipdetail
@@ -72,7 +73,7 @@ func DeviceTwinToMsgTwin(deviceTwins []dtclient.DeviceTwin) map[string]*MsgTwin 
 			expectedValue := &TwinValue{Value: &expected}
 			if twin.ExpectedMeta != "" {
 				if err := json.Unmarshal([]byte(twin.ExpectedMeta), &expectedMeta); err != nil {
-
+					klog.Fatalf("failed to nmarshal json: %v", err)
 				}
 				expectedValue.Metadata = &expectedMeta
 			}
@@ -82,7 +83,7 @@ func DeviceTwinToMsgTwin(deviceTwins []dtclient.DeviceTwin) map[string]*MsgTwin 
 			actualValue := &TwinValue{Value: &actual}
 			if twin.ActualMeta != "" {
 				if err := json.Unmarshal([]byte(twin.ActualMeta), &actualMeta); err != nil {
-
+					klog.Fatalf("failed to nmarshal json: %v", err)
 				}
 			}
 			msgTwin.Actual = actualValue
@@ -90,13 +91,13 @@ func DeviceTwinToMsgTwin(deviceTwins []dtclient.DeviceTwin) map[string]*MsgTwin 
 
 		if twin.ExpectedVersion != "" {
 			if err := json.Unmarshal([]byte(twin.ExpectedVersion), &expectedVersion); err != nil {
-
+				klog.Fatalf("failed to nmarshal json: %v", err)
 			}
 			msgTwin.ExpectedVersion = &expectedVersion
 		}
 		if twin.ActualVersion != "" {
 			if err := json.Unmarshal([]byte(twin.ActualVersion), &actualVersion); err != nil {
-
+				klog.Fatalf("failed to nmarshal json: %v", err)
 			}
 			msgTwin.ActualVersion = &actualVersion
 		}

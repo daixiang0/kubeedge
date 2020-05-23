@@ -86,6 +86,7 @@ func (q *ChannelMessageQueue) addListMessageToQueue(nodeID string, msg *beehiveM
 
 	if err := nodeListStore.Add(msg); err != nil {
 		klog.Errorf("failed to add msg: %s", err)
+		return
 	}
 	nodeListQueue.Add(messageKey)
 }

@@ -107,16 +107,18 @@ func dealDeviceStateUpdate(context *dtcontext.DTContext, resource string, msg in
 
 	}
 	topic := dtcommon.DeviceETPrefix + device.ID + dtcommon.DeviceETStateUpdateSuffix + "/result"
-	if err = context.Send(device.ID, dtcommon.SendToEdge, dtcommon.CommModule,
-		context.BuildModelMessage(modules.BusGroup, "",
-			topic, "publish", payload)); err != nil {
+	if err = context.Send(device.ID,
+		dtcommon.SendToEdge,
+		dtcommon.CommModule,
+		context.BuildModelMessage(modules.BusGroup, "", topic, "publish", payload)); err != nil {
 		return nil, err
 	}
 
 	msgResource := "device/" + device.ID + "/state"
-	if err = context.Send(deviceID, dtcommon.SendToCloud, dtcommon.CommModule,
-		context.BuildModelMessage("resource", "",
-			msgResource, "update", string(payload))); err != nil {
+	if err = context.Send(deviceID,
+		dtcommon.SendToCloud,
+		dtcommon.CommModule,
+		context.BuildModelMessage("resource", "", msgResource, "update", string(payload))); err != nil {
 		return nil, err
 	}
 	return nil, nil
@@ -181,8 +183,7 @@ func DeviceUpdated(context *dtcontext.DTContext, deviceID string, attributes map
 			}
 			topic := dtcommon.DeviceETPrefix + deviceID + dtcommon.DeviceETUpdatedSuffix
 			if err := context.Send(deviceID, dtcommon.SendToEdge, dtcommon.CommModule,
-				context.BuildModelMessage(modules.BusGroup, "",
-					topic, "publish", payload)); err != nil {
+				context.BuildModelMessage(modules.BusGroup, "", topic, "publish", payload)); err != nil {
 				return nil, err
 			}
 		}

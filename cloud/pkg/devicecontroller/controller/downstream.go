@@ -658,7 +658,7 @@ func (dc *DownstreamController) deleteFromConfigMap(device *v1alpha1.Device) {
 		if nodeConfigMap.Data[DeviceProfileJSON] == "{}" {
 			deleteOptions := &metav1.DeleteOptions{}
 			if err := dc.kubeClient.CoreV1().ConfigMaps(device.Namespace).Delete(nodeConfigMap.Name, deleteOptions); err != nil {
-				klog.Errorf("Failed to delete config map %v in namespace %v", nodeConfigMap, device.Namespace)
+				klog.Errorf("failed to delete config map %s in namespace %s", nodeConfigMap.Name, device.Namespace)
 				return
 			}
 			// remove from cache

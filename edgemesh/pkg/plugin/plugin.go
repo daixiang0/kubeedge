@@ -2,6 +2,7 @@ package plugin
 
 import (
 	"fmt"
+
 	"github.com/go-chassis/go-archaius"
 	"github.com/go-chassis/go-chassis/control"
 	"github.com/go-chassis/go-chassis/core/config"

@@ -180,14 +180,16 @@ func Added(context *dtcontext.DTContext, toAdd []dttype.Device, baseMessage dtty
 		deviceModel, deviceExist := context.GetDevice(device.ID)
 		if deviceExist {
 			if delta {
-				klog.Errorf("Add device %s failed, has existed", device.ID)
+				klog.Errorf("add device %s failed, has existed", device.ID)
 				continue
 			}
 			if _, err := DeviceUpdated(context, device.ID, device.Attributes, baseMessage, dealType); err != nil {
-
+				klog.Errorf("update device %s failed", device.ID)
+				continue
 			}
 			if err := DealDeviceTwin(context, device.ID, baseMessage.EventID, device.Twin, dealType); err != nil {
-
+				klog.Errorf("delete device %s failed", device.ID)
+				continue
 			}
 			//todo sync twin
 			continue
@@ -231,14 +233,16 @@ func Added(context *dtcontext.DTContext, toAdd []dttype.Device, baseMessage dtty
 		if device.Twin != nil {
 			klog.Infof("Add device twin during first adding device %s", device.ID)
 			if err := DealDeviceTwin(context, device.ID, baseMessage.EventID, device.Twin, dealType); err != nil {
-
+				klog.Errorf("delete device %s failed", device.ID)
+				continue
 			}
 		}
 
 		if device.Attributes != nil {
 			klog.Infof("Add device attr during first adding device %s", device.ID)
 			if _, err := DeviceUpdated(context, device.ID, device.Attributes, baseMessage, dealType); err != nil {
-
+				klog.Errorf("update device %s failed", device.ID)
+				continue
 			}
 		}
 		topic := dtcommon.MemETPrefix + context.NodeName + dtcommon.MemETUpdateSuffix
@@ -250,9 +254,12 @@ func Added(context *dtcontext.DTContext, toAdd []dttype.Device, baseMessage dtty
 		if err != nil {
 
 		} else {
-			if err := context.Send("", dtcommon.SendToEdge, dtcommon.CommModule,
+			if err := context.Send("",
+				dtcommon.SendToEdge,
+				dtcommon.CommModule,
 				context.BuildModelMessage(modules.BusGroup, "", topic, "publish", result)); err != nil {
-
+				klog.Errorf("failed to send, err: %v", err)
+				continue
 			}
 		}
 		if delta {
@@ -355,6 +362,7 @@ func DealGetMembership(context *dtcontext.DTContext, payload []byte) error {
 
 	if err := context.Send("", dtcommon.SendToEdge, dtcommon.CommModule,
 		context.BuildModelMessage(modules.BusGroup, "", topic, "publish", result)); err != nil {
+		klog.Errorf("failed to send, err: %v", err)
 		return err
 	}
 
