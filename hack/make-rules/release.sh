@@ -32,20 +32,18 @@ done
 
 for dir in ${KUBEEDGE_OUTPUT_BINPATH}/*; do
   pushd $dir >/dev/null
-  for file in $(ls); do
-    arch=$(echo ${dir##*/})
+  for file in *; do
+    arch=${dir##*/}
     name="${file}-${VERSION}-linux-${arch}"
     sha256sum $file > "${name}.txt"
     tar -czf ${name}.tar.gz ${file}*
+    sha256sum ${name}.tar.gz > "${name}.tar.gz.txt"
   done
   popd >/dev/null
 done
 
 mkdir output
-cp -a ${KUBEEDGE_OUTPUT_BINPATH}/**/*.tar.gz output/
-pushd ${KUBEEDGE_ROOT}/output >/dev/null
-sha256sum *.tar.gz > "sha256sums.txt"
-popd >/dev/null
+cp -a ${KUBEEDGE_OUTPUT_BINPATH}/**/*.tar.gz* output/
 
 # images
 kubeedge::docker::all_build
