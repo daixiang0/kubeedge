@@ -10,6 +10,10 @@ import (
 
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/version"
+	crdclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 )
 
 //KubeCloudInstTool embedes Common struct
@@ -25,26 +29,23 @@ func (cu *KubeCloudInstTool) InstallTools() error {
 	cu.SetOSInterface(GetOSInterface())
 	cu.SetKubeEdgeVersion(cu.ToolVersion)
 
-	err := cu.InstallKubeEdge(types.CloudCore)
-	if err != nil {
-		return err
-	}
-
 	if cu.ToolVersion < "1.3.0" {
-		err = cu.generateCertificates()
-		if err != nil {
+		if err := cu.InstallKubeEdge(types.CloudCore); err != nil {
 			return err
 		}
 
-		err = cu.tarCertificates()
-		if err != nil {
+		if err := cu.generateCertificates(); err != nil {
+			return err
+		}
+
+		if err := cu.tarCertificates(); err != nil {
 			return err
 		}
 	}
 
 	if cu.ToolVersion >= "1.2.0" {
 		//This makes sure the path is created, if it already exists also it is fine
-		err = os.MkdirAll(KubeEdgeNewConfigDir, os.ModePerm)
+		err := os.MkdirAll(KubeEdgeNewConfigDir, os.ModePerm)
 		if err != nil {
 			return fmt.Errorf("not able to create %s folder path", KubeEdgeNewConfigDir)
 		}
@@ -71,7 +72,7 @@ func (cu *KubeCloudInstTool) InstallTools() error {
 		}
 	} else {
 		//This makes sure the path is created, if it already exists also it is fine
-		err = os.MkdirAll(KubeEdgeCloudConfPath, os.ModePerm)
+		err := os.MkdirAll(KubeEdgeCloudConfPath, os.ModePerm)
 		if err != nil {
 			return fmt.Errorf("not able to create %s folder path", KubeEdgeConfPath)
 		}
@@ -91,7 +92,7 @@ func (cu *KubeCloudInstTool) InstallTools() error {
 
 	time.Sleep(1 * time.Second)
 
-	err = cu.RunCloudCore()
+	err := cu.RunCloudCore()
 	if err != nil {
 		return err
 	}
@@ -137,6 +138,11 @@ func (cu *KubeCloudInstTool) tarCertificates() error {
 
 //RunCloudCore starts cloudcore process
 func (cu *KubeCloudInstTool) RunCloudCore() error {
+	// above 1.3.0, cloudcore run as deployment which is installed in k8sinstaller.go
+	if cu.ToolVersion >= "1.3.0" {
+		return nil
+	}
+
 	// create the log dir for kubeedge
 	err := os.MkdirAll(KubeEdgeLogPath, os.ModePerm)
 	if err != nil {
@@ -177,10 +183,54 @@ func (cu *KubeCloudInstTool) RunCloudCore() error {
 //TearDown method will remove the edge node from api-server and stop cloudcore process
 func (cu *KubeCloudInstTool) TearDown() error {
 	cu.SetOSInterface(GetOSInterface())
-	cu.SetKubeEdgeVersion(cu.ToolVersion)
 
-	//Kill cloudcore process
-	cu.KillKubeEdgeBinary(KubeCloudBinaryName)
+	if version.Get().GitVersion >= "v1.3.0" {
+		config, err := BuildConfig(cu.KubeConfig, cu.Master)
+		if err != nil {
+			return fmt.Errorf("failed to build config, err: %v", err)
+		}
+
+		client, err := kubernetes.NewForConfig(config)
+		if err != nil {
+			return fmt.Errorf("failed to create client, err: %v", err)
+		}
+
+		crdClient, err := crdclient.NewForConfig(config)
+		if err != nil {
+			return err
+		}
+
+		deletePolicy := metav1.DeletePropagationForeground
+		deleteOptions := metav1.DeleteOptions{
+			PropagationPolicy: &deletePolicy,
+		}
+		if err = client.CoreV1().Namespaces().Delete(KubeEdgeCloudNameSpace, &deleteOptions); err != nil {
+			fmt.Printf("failed to delete namespace: %v", err)
+		}
+
+		if err = client.RbacV1().ClusterRoles().Delete(KubeCloudBinaryName, &deleteOptions); err != nil {
+			fmt.Printf("failed to delete clusterrole: %v", err)
+		}
+
+		if err = client.RbacV1().ClusterRoleBindings().Delete(KubeCloudBinaryName, &deleteOptions); err != nil {
+			fmt.Printf("failed to delete cloudrolebinding: %v", err)
+		}
+
+		for _, name := range []string{
+			"devices.devices.kubeedge.io",
+			"devicemodels.devices.kubeedge.io",
+			"clusterobjectsyncs.reliablesyncs.kubeedge.io",
+			"objectsyncs.reliablesyncs.kubeedge.io",
+		} {
+			if err = crdClient.ApiextensionsV1beta1().CustomResourceDefinitions().Delete(name, &deleteOptions); err != nil {
+				fmt.Printf("failed to delete crd: %v", err)
+			}
+		}
+	} else {
+		if err := cu.KillKubeEdgeBinary(KubeCloudBinaryName); err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
