@@ -23,27 +23,10 @@ set -o pipefail
 KUBEEDGE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
 source "${KUBEEDGE_ROOT}/hack/lib/init.sh"
 source "${KUBEEDGE_ROOT}/hack/lib/docker.sh"
+source "${KUBEEDGE_ROOT}/hack/lib/release.sh"
 
 # binaries
-support_arch="amd64 arm arm64"
-for arch in $support_arch; do
-  ARCH=$arch kubeedge::golang::crossbuild_binaries
-done
-
-for dir in ${KUBEEDGE_OUTPUT_BINPATH}/*; do
-  pushd $dir >/dev/null
-  for file in *; do
-    arch=${dir##*/}
-    name="${file}-${VERSION}-linux-${arch}"
-    sha256sum $file > "${name}.txt"
-    tar -czf ${name}.tar.gz ${file}*
-    sha256sum ${name}.tar.gz > "${name}.tar.gz.txt"
-  done
-  popd >/dev/null
-done
-
-mkdir output
-cp -a ${KUBEEDGE_OUTPUT_BINPATH}/**/*.tar.gz* output/
+kubeedge::release::build_all_binary
 
 # images
 kubeedge::docker::all_build

@@ -151,6 +151,7 @@ kubeedge::check::env() {
 ALL_BINARIES_AND_TARGETS=(
   cloudcore:cloud/cmd/cloudcore
   admission:cloud/cmd/admission
+  csidriver:cloud/cmd/csidriver
   keadm:keadm/cmd/keadm
   edgecore:edge/cmd/edgecore
   edgesite:edgesite/cmd/edgesite
@@ -206,14 +207,13 @@ kubeedge::golang::build_binaries() {
   local ldflags
   read -r ldflags <<< "$(kubeedge::version::ldflags)"
 
-  local build_option=${BUILD_OPTION:-} 
+  local build_option=${BUILD_OPTION:-}
   # do not build small binary in CI env
   local ci_env=${CI_ENV:-No}
   [[ ${ci_env} == "No" ]] && ldflags="-w -s -extldflags -static $ldflags"
 
   mkdir -p ${KUBEEDGE_OUTPUT_BINPATH} .build
 
-  docker rm -f kubeedge_build &>/dev/null || true
   docker run -itd --name kubeedge_build -v ${KUBEEDGE_ROOT}:/go/src/github.com/kubeedge/kubeedge \
     -w /go/src/github.com/kubeedge/kubeedge golang:1.13
   docker exec -i kubeedge_build bash -c "go mod download"
@@ -227,7 +227,9 @@ kubeedge::golang::build_binaries() {
     # do not build small binary in CI env
     [[ ${ci_env} == "No" ]] && upx-ucl -9 .build/${name}
   done
+
   mv .build/* ${KUBEEDGE_OUTPUT_BINPATH}
+  docker rm -f kubeedge_build &>/dev/null
   rm -rf .build
 }
 
