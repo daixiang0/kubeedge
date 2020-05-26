@@ -5,8 +5,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
 	"k8s.io/klog"
+
+	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
 )
 
 //UnmarshalMembershipDetail Unmarshal membershipdetail
