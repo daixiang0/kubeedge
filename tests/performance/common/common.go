@@ -212,7 +212,7 @@ func ApplyLabel(nodeHandler string) error {
 				break
 			}
 		}
-		if isMasterNode == false {
+		if !isMasterNode {
 			if err := utils.ApplyLabelToNode(nodeHandler+"/"+node.Name, NodelabelKey, NodelabelVal); err != nil {
 				return err
 			}

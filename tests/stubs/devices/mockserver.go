@@ -82,7 +82,11 @@ func main() {
 
 	<-ctx.Done()
 	klog.Info("Stopping server and cleaning up")
-	d.StopAdvertising()
-	d.RemoveAllServices()
+	if err := d.StopAdvertising(); err != nil {
+		klog.Fatalf("failed to stop advertising, err: %v", err)
+	}
+	if err := d.RemoveAllServices(); err != nil {
+		klog.Fatalf("failed to remove all service, err: %v", err)
+	}
 	klog.Info("Stopped advertising and removed all services!!!!")
 }
