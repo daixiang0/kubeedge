@@ -144,6 +144,6 @@ func (m *Server) Publish(topic string, payload []byte) {
 		QOS:     packet.QOS(m.qos),
 	}
 	if err := m.backend.Publish(client, msg, nil); err != nil {
-
+		klog.Fatalf("failed to publish topic: %v", err)
 	}
 }
