@@ -335,11 +335,7 @@ func TestSendToCloud(t *testing.T) {
 			mockAdapter.EXPECT().Send(gomock.Any()).Return(tt.mockError).Times(1)
 			config.Config.Heartbeat = tt.HeartbeatPeriod
 			if !tt.waitError && tt.expectedError == nil {
-				go func() {
-					if err := tt.hub.sendToCloud(tt.message); err != nil {
-						t.Errorf("SendToCloud() error: %v", err)
-					}
-				}()
+				go tt.hub.sendToCloud(tt.message)
 				time.Sleep(1 * time.Second)
 				tempChannel := tt.hub.syncKeeper["test_id"]
 				tempChannel <- *model.NewMessage("test_id")

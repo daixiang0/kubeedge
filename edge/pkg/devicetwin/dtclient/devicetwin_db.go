@@ -99,13 +99,11 @@ func UpdateDeviceTwinMulti(updates []DeviceTwinUpdate) error {
 func DeviceTwinTrans(adds []DeviceTwin, deletes []DeviceDelete, updates []DeviceTwinUpdate) error {
 	var err error
 	obm := dbm.DBAccess
-	if err = obm.Begin(); err != nil {
-		return err
-	}
+	obm.Begin()
 	for _, add := range adds {
 		err = SaveDeviceTwin(&add)
 		if err != nil {
-			_ = obm.Rollback()
+			obm.Rollback()
 			return err
 		}
 	}
@@ -113,7 +111,7 @@ func DeviceTwinTrans(adds []DeviceTwin, deletes []DeviceDelete, updates []Device
 	for _, delete := range deletes {
 		err = DeleteDeviceTwin(delete.DeviceID, delete.Name)
 		if err != nil {
-			_ = obm.Rollback()
+			obm.Rollback()
 			return err
 		}
 	}
@@ -121,12 +119,10 @@ func DeviceTwinTrans(adds []DeviceTwin, deletes []DeviceDelete, updates []Device
 	for _, update := range updates {
 		err = UpdateDeviceTwinFields(update.DeviceID, update.Name, update.Cols)
 		if err != nil {
-			_ = obm.Rollback()
+			obm.Rollback()
 			return err
 		}
 	}
-	if err = obm.Commit(); err != nil {
-		return err
-	}
+	obm.Commit()
 	return nil
 }

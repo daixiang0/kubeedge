@@ -231,15 +231,15 @@ func createDeviceTwin(devTwin dtclient.DeviceTwin) []dtclient.DeviceTwin {
 func createMessageTwinFromDeviceTwin(devTwin dtclient.DeviceTwin) map[string]*MsgTwin {
 	var expectedMeta ValueMetadata
 	expectedValue := &TwinValue{Value: &devTwin.Expected}
-	_ = json.Unmarshal([]byte(devTwin.ExpectedMeta), &expectedMeta)
+	json.Unmarshal([]byte(devTwin.ExpectedMeta), &expectedMeta)
 	expectedValue.Metadata = &expectedMeta
 	var actualMeta ValueMetadata
 	actualValue := &TwinValue{Value: &devTwin.Actual}
-	_ = json.Unmarshal([]byte(devTwin.ActualMeta), &actualMeta)
+	json.Unmarshal([]byte(devTwin.ActualMeta), &actualMeta)
 	var expectedVersion TwinVersion
-	_ = json.Unmarshal([]byte(devTwin.ExpectedVersion), &expectedVersion)
+	json.Unmarshal([]byte(devTwin.ExpectedVersion), &expectedVersion)
 	var actualVersion TwinVersion
-	_ = json.Unmarshal([]byte(devTwin.ActualVersion), &actualVersion)
+	json.Unmarshal([]byte(devTwin.ActualVersion), &actualVersion)
 	msgTwins := make(map[string]*MsgTwin)
 	msgTwin := &MsgTwin{
 		Optional: &devTwin.Optional,
@@ -766,7 +766,7 @@ func TestBuildErrorResult(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			got, err := BuildErrorResult(test.para)
 			gotResult := Result{}
-			_ = json.Unmarshal(got, &gotResult)
+			json.Unmarshal(got, &gotResult)
 			if !reflect.DeepEqual(err, test.wantErr) {
 				t.Errorf("BuildErrorResult() error = %v, wantErr %v", err, test.wantErr)
 				return

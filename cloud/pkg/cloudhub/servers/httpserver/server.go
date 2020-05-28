@@ -77,10 +77,14 @@ func electionHandler(w http.ResponseWriter, r *http.Request) {
 	checker := hubconfig.Config.Checker
 	if checker.Check(r) != nil {
 		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte(fmt.Sprintf("Cloudcore is not ready")))
+		if _, err := w.Write([]byte(fmt.Sprintf("Cloudcore is not ready"))); err != nil {
+			klog.Errorf("failed to write, err: %v", err)
+		}
 	} else {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(fmt.Sprintf("Cloudcore is ready")))
+		if _, err := w.Write([]byte(fmt.Sprintf("Cloudcore is ready"))); err != nil {
+			klog.Errorf("failed to write, err: %v", err)
+		}
 	}
 }
 

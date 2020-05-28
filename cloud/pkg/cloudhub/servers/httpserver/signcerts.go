@@ -81,7 +81,7 @@ func GenerateToken() error {
 	// save caHashAndToken to secret
 	err = CreateTokenSecret([]byte(caHashToken))
 	if err := CreateTokenSecret([]byte(caHashToken)); err != nil {
-		return fmt.Errorf("Failed to create the ca token  for edgecore register, err: %v", err)
+		klog.Fatalf("Failed to create the ca token  for edgecore register, err: %v", err)
 	}
 
 	t := time.NewTicker(time.Hour * 12)

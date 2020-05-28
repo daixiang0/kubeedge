@@ -291,9 +291,7 @@ func (c *csiMountMgr) podAttributes() (map[string]string, error) {
 
 	kletHost, ok := c.plugin.host.(volume.KubeletVolumeHost)
 	if ok {
-		if err := kletHost.WaitForCacheSync(); err != nil {
-			klog.Errorf("Wait for cache sync failed with error: %v", err)
-		}
+		kletHost.WaitForCacheSync()
 	}
 
 	if c.plugin.csiDriverLister == nil {

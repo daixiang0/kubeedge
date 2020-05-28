@@ -5,8 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"k8s.io/klog"
-
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
 )
 
@@ -73,9 +71,7 @@ func DeviceTwinToMsgTwin(deviceTwins []dtclient.DeviceTwin) map[string]*MsgTwin 
 		if expected != "" {
 			expectedValue := &TwinValue{Value: &expected}
 			if twin.ExpectedMeta != "" {
-				if err := json.Unmarshal([]byte(twin.ExpectedMeta), &expectedMeta); err != nil {
-					klog.Infof("failed to unmarshal json: %v", err)
-				}
+				json.Unmarshal([]byte(twin.ExpectedMeta), &expectedMeta)
 				expectedValue.Metadata = &expectedMeta
 			}
 			msgTwin.Expected = expectedValue
@@ -83,23 +79,17 @@ func DeviceTwinToMsgTwin(deviceTwins []dtclient.DeviceTwin) map[string]*MsgTwin 
 		if actual != "" {
 			actualValue := &TwinValue{Value: &actual}
 			if twin.ActualMeta != "" {
-				if err := json.Unmarshal([]byte(twin.ActualMeta), &actualMeta); err != nil {
-					klog.Infof("failed to unmarshal json: %v", err)
-				}
+				json.Unmarshal([]byte(twin.ActualMeta), &actualMeta)
 			}
 			msgTwin.Actual = actualValue
 		}
 
 		if twin.ExpectedVersion != "" {
-			if err := json.Unmarshal([]byte(twin.ExpectedVersion), &expectedVersion); err != nil {
-				klog.Infof("failed to unmarshal json: %v", err)
-			}
+			json.Unmarshal([]byte(twin.ExpectedVersion), &expectedVersion)
 			msgTwin.ExpectedVersion = &expectedVersion
 		}
 		if twin.ActualVersion != "" {
-			if err := json.Unmarshal([]byte(twin.ActualVersion), &actualVersion); err != nil {
-				klog.Infof("failed to unmarshal json: %v", err)
-			}
+			json.Unmarshal([]byte(twin.ActualVersion), &actualVersion)
 			msgTwin.ActualVersion = &actualVersion
 		}
 		msgTwins[twin.Name] = msgTwin
@@ -127,7 +117,7 @@ func MsgAttrToDeviceAttr(name string, msgAttr *MsgAttr) dtclient.DeviceAttr {
 func CopyMsgTwin(msgTwin *MsgTwin, noVersion bool) MsgTwin {
 	var result MsgTwin
 	payload, _ := json.Marshal(msgTwin)
-	_ = json.Unmarshal(payload, &result)
+	json.Unmarshal(payload, &result)
 	if noVersion {
 		result.ActualVersion = nil
 		result.ExpectedVersion = nil
@@ -139,7 +129,7 @@ func CopyMsgTwin(msgTwin *MsgTwin, noVersion bool) MsgTwin {
 func CopyMsgAttr(msgAttr *MsgAttr) MsgAttr {
 	var result MsgAttr
 	payload, _ := json.Marshal(msgAttr)
-	_ = json.Unmarshal(payload, &result)
+	json.Unmarshal(payload, &result)
 	return result
 }
 
