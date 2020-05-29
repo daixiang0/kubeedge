@@ -208,21 +208,25 @@ kubeedge::golang::build_binaries() {
   read -r ldflags <<< "$(kubeedge::version::ldflags)"
 
   local build_option=${BUILD_OPTION:-}
+
   # do not build small binary in CI env
   local ci_env=${CI_ENV:-No}
   [[ ${ci_env} == "No" ]] && ldflags="-w -s -extldflags -static $ldflags"
 
   mkdir -p ${KUBEEDGE_OUTPUT_BINPATH} .build
 
+  docker rm -f kubeedge_build &>/dev/null || true
+
   docker run -itd --name kubeedge_build -v ${KUBEEDGE_ROOT}:/go/src/github.com/kubeedge/kubeedge \
     -w /go/src/github.com/kubeedge/kubeedge golang:1.13
-  docker exec -i kubeedge_build bash -c "go mod download"
+  docker exec -i kubeedge_build bash -c "go mod download; apt-get update && apt-get install -y gcc-aarch64-linux-gnu gcc-arm-linux-gnueabi"
 
   for bin in ${binaries[@]}; do
     echo "building $bin"
     local name="${bin##*/}"
     set -x
-    docker exec -i kubeedge_build bash -c "GOOS=linux CGO_ENABLED=0 ${build_option} \
+    # sqlite need cgo indeed
+    docker exec -i kubeedge_build bash -c "GOOS=linux CGO_ENABLED=1 ${build_option} \
       go build -o .build/${name} -ldflags '$ldflags' $bin"
     # do not build small binary in CI env
     [[ ${ci_env} == "No" ]] && upx-ucl -9 .build/${name}
@@ -236,12 +240,12 @@ kubeedge::golang::build_binaries() {
 kubeedge::golang::crossbuild_binaries() {
   case $ARCH in
     arm)
-      BUILD_OPTION="GOARCH=arm GOARM=7" kubeedge::golang::build_binaries "$@"
+      BUILD_OPTION="CC=arm-linux-gnueabi-gcc GOARCH=arm GOARM=7" kubeedge::golang::build_binaries "$@"
       ;;
     arm64)
-      BUILD_OPTION="GOARCH=arm64" kubeedge::golang::build_binaries "$@"
+      BUILD_OPTION="CC=aarch64-linux-gnu-gcc GOARCH=arm64" kubeedge::golang::build_binaries "$@"
       ;;
-    amd64 | *)
+    *)
       kubeedge::golang::build_binaries "$@"
       ;;
   esac

@@ -22,7 +22,7 @@
 **What this PR does / why we need it**:
 
 **Which issue(s) this PR fixes**:
-<!-- 
+<!--
 *Automatically closes linked issue when PR is merged.
 Usage: `Fixes #<issue number>`, or `Fixes (paste link of issue)`.
 _If PR is about `failing-tests or flakes`, please post the related issues/tests in a comment and do not use `Fixes`_*
@@ -32,22 +32,11 @@ Fixes #
 **Special notes for your reviewer**:
 
 **Does this PR introduce a user-facing change?**:
-
 <!--
-    Don't forget about CHANGELOG!
-
-    Changelog entry format:
-    - <PR-title>. ([#<PR-id>](<PR-URL>), [@<author-name>](<authror-URL>), ...)
-
-    <PR-title> Title of your pull request.
-    <PR-id> Id of your pull request.
-    <PR-URL> URL of your PR such as https://github.com/thanos-io/thanos/pull/<PR-id>
-    <author-name> Name of your github account.
-    <author-URL> URL of your github account.
-
-    An example:
-    - Implment CloudCore HA in hot standby mode. ([#1600](https://github.com/kubeedge/kubeedge/pull/1600), [@GsssC](https://github.com/GsssC), [@kevin-wangzefeng](https://github.com/kevin-wangzefeng)).
+If no, just write "NONE" in the release-note block below.
+If yes, a release note is required:
+Enter your extended release note in the block below. If the PR requires additional action from users switching to the new release, include the string "action required".
 -->
+```release-note
 
-* [ ] I added CHANGELOG entry for this change.
-* [ ] Change is not relevant to the end user.
+```
