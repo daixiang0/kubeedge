@@ -59,7 +59,7 @@ func (dtc *DTContext) CommTo(dtmName string, content interface{}) error {
 		v <- content
 		return nil
 	}
-	return errors.New("Not found chan to communicate")
+	return errors.New("not found chan to communicate")
 }
 
 //HeartBeat hearbeat to dtcontroller

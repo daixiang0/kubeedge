@@ -85,7 +85,9 @@ func (qcc *QuicClient) Init() error {
 
 //Uninit closes the quic connection
 func (qcc *QuicClient) Uninit() {
-	qcc.client.Close()
+	if err := qcc.client.Close(); err != nil {
+		klog.Fatalf("failed to close client, err: %v", err)
+	}
 }
 
 //Send sends the message as JSON object through the connection
@@ -96,7 +98,9 @@ func (qcc *QuicClient) Send(message model.Message) error {
 //Receive reads the binary message through the connection
 func (qcc *QuicClient) Receive() (model.Message, error) {
 	message := model.Message{}
-	qcc.client.ReadMessage(&message)
+	if err := qcc.client.ReadMessage(&message); err != nil {
+		return message, err
+	}
 	return message, nil
 }
 

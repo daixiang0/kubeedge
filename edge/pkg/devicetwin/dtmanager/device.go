@@ -3,6 +3,7 @@ package dtmanager
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -63,7 +64,7 @@ func initDeviceActionCallBack() {
 	deviceActionCallBack[dtcommon.DeviceStateUpdate] = dealDeviceStateUpdate
 }
 
-func dealDeviceStateUpdate(context *dtcontext.DTContext, resource string, msg interface{}) (interface{}, error) {
+func dealDeviceStateUpdate(context *dtcontext.DTContext, deviceID string, msg interface{}) (interface{}, error) {
 	message, ok := msg.(*model.Message)
 	if !ok {
 		return nil, errors.New("msg not Message type")
@@ -74,49 +75,56 @@ func dealDeviceStateUpdate(context *dtcontext.DTContext, resource string, msg in
 		klog.Errorf("Unmarshal device info failed, err: %#v", err)
 		return nil, err
 	}
-	deviceID := resource
 	defer context.Unlock(deviceID)
 	context.Lock(deviceID)
 	doc, docExist := context.DeviceList.Load(deviceID)
 	if !docExist {
-		return nil, nil
+		return nil, fmt.Errorf("device %s does not exist", deviceID)
 	}
 	device, ok := doc.(*dttype.Device)
 	if !ok {
-		return nil, nil
+		return nil, fmt.Errorf("invalid device info: %+v", doc)
 	}
 	if strings.Compare("online", updateDevice.State) != 0 && strings.Compare("offline", updateDevice.State) != 0 && strings.Compare("unknown", updateDevice.State) != 0 {
-		return nil, nil
+		return nil, fmt.Errorf("invalid device state: %s", updateDevice.State)
 	}
 	lastOnline := time.Now().Format("2006-01-02 15:04:05")
+	updateData := map[string]interface{}{
+		"state": updateDevice.State,
+		"last_online": lastOnline,
+	}
 	for i := 1; i <= dtcommon.RetryTimes; i++ {
-		err = dtclient.UpdateDeviceField(device.ID, "state", updateDevice.State)
-		err = dtclient.UpdateDeviceField(device.ID, "last_online", lastOnline)
+		err = dtclient.UpdateDeviceFields(device.ID, updateData)
 		if err == nil {
 			break
 		}
 		time.Sleep(dtcommon.RetryInterval)
 	}
 	if err != nil {
-
+		return nil, err
 	}
 	device.State = updateDevice.State
 	device.LastOnline = lastOnline
 	payload, err := dttype.BuildDeviceState(dttype.BuildBaseMessage(), *device)
 	if err != nil {
-
+		return nil, err
 	}
 	topic := dtcommon.DeviceETPrefix + device.ID + dtcommon.DeviceETStateUpdateSuffix + "/result"
-	context.Send(device.ID,
+	err = context.Send(device.ID,
 		dtcommon.SendToEdge,
 		dtcommon.CommModule,
 		context.BuildModelMessage(modules.BusGroup, "", topic, "publish", payload))
-
+	if err != nil {
+		return nil, err
+	}
 	msgResource := "device/" + device.ID + "/state"
-	context.Send(deviceID,
+	err = context.Send(deviceID,
 		dtcommon.SendToCloud,
 		dtcommon.CommModule,
 		context.BuildModelMessage("resource", "", msgResource, "update", string(payload)))
+	if err != nil {
+		return nil, err
+	}
 	return nil, nil
 }
 
@@ -135,7 +143,9 @@ func dealDeviceUpdated(context *dtcontext.DTContext, resource string, msg interf
 	deviceID := resource
 
 	context.Lock(deviceID)
-	DeviceUpdated(context, deviceID, updateDevice.Attributes, dttype.BaseMessage{EventID: updateDevice.EventID}, 0)
+	if _, err := DeviceUpdated(context, deviceID, updateDevice.Attributes, dttype.BaseMessage{EventID: updateDevice.EventID}, 0); err != nil {
+		return nil, err
+	}
 	context.Unlock(deviceID)
 	return nil, nil
 }
@@ -166,8 +176,11 @@ func DeviceUpdated(context *dtcontext.DTContext, deviceID string, attributes map
 		baseMessage.Timestamp = now
 
 		if err != nil {
-			SyncDeviceFromSqlite(context, deviceID)
 			klog.Errorf("Update device failed due to writing sql error: %v", err)
+			if err := SyncDeviceFromSqlite(context, deviceID); err != nil {
+				return nil, err
+			}
+
 		} else {
 			klog.Infof("Send update attributes of device %s event to edge app", deviceID)
 			payload, err := dttype.BuildDeviceAttrUpdate(baseMessage, result)
@@ -176,8 +189,11 @@ func DeviceUpdated(context *dtcontext.DTContext, deviceID string, attributes map
 				klog.Errorf("Build device attribute update failed: %v", err)
 			}
 			topic := dtcommon.DeviceETPrefix + deviceID + dtcommon.DeviceETUpdatedSuffix
-			context.Send(deviceID, dtcommon.SendToEdge, dtcommon.CommModule,
+			err = context.Send(deviceID, dtcommon.SendToEdge, dtcommon.CommModule,
 				context.BuildModelMessage(modules.BusGroup, "", topic, "publish", payload))
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 

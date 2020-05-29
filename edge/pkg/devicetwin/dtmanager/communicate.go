@@ -49,7 +49,7 @@ func (cw CommWorker) Start() {
 			}
 
 		case <-time.After(time.Duration(60) * time.Second):
-			cw.checkConfirm(cw.DTContexts, nil)
+			_, _ = cw.checkConfirm(cw.DTContexts, nil)
 		case v, ok := <-cw.HeartBeatChan:
 			if !ok {
 				return

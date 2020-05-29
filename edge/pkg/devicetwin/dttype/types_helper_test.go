@@ -19,6 +19,7 @@ package dttype
 import (
 	"encoding/json"
 	"errors"
+	"k8s.io/klog"
 	"reflect"
 	"testing"
 	"time"
@@ -231,15 +232,23 @@ func createDeviceTwin(devTwin dtclient.DeviceTwin) []dtclient.DeviceTwin {
 func createMessageTwinFromDeviceTwin(devTwin dtclient.DeviceTwin) map[string]*MsgTwin {
 	var expectedMeta ValueMetadata
 	expectedValue := &TwinValue{Value: &devTwin.Expected}
-	json.Unmarshal([]byte(devTwin.ExpectedMeta), &expectedMeta)
+	if err := json.Unmarshal([]byte(devTwin.ExpectedMeta), &expectedMeta); err != nil {
+		klog.Fatalf("failed to unmarshal, err: %v", err)
+	}
 	expectedValue.Metadata = &expectedMeta
 	var actualMeta ValueMetadata
 	actualValue := &TwinValue{Value: &devTwin.Actual}
-	json.Unmarshal([]byte(devTwin.ActualMeta), &actualMeta)
+	if err := json.Unmarshal([]byte(devTwin.ActualMeta), &actualMeta); err != nil {
+		klog.Fatalf("failed to unmarshal, err: %v", err)
+	}
 	var expectedVersion TwinVersion
-	json.Unmarshal([]byte(devTwin.ExpectedVersion), &expectedVersion)
+	if err := json.Unmarshal([]byte(devTwin.ExpectedVersion), &expectedVersion); err != nil {
+		klog.Fatalf("failed to unmarshal, err: %v", err)
+	}
 	var actualVersion TwinVersion
-	json.Unmarshal([]byte(devTwin.ActualVersion), &actualVersion)
+	if err := json.Unmarshal([]byte(devTwin.ActualVersion), &actualVersion); err != nil {
+		klog.Fatalf("failed to unmarshal, err: %v", err)
+	}
 	msgTwins := make(map[string]*MsgTwin)
 	msgTwin := &MsgTwin{
 		Optional: &devTwin.Optional,
@@ -264,11 +273,11 @@ func TestDeviceTwinToMsgTwin(t *testing.T) {
 		Description:     "Sensor",
 		Expected:        "ON",
 		Actual:          "ON",
-		ExpectedVersion: "Version1",
-		ActualVersion:   "Version1",
+		ExpectedVersion: "{\"cloud\": 10, \"edge\": 5}",
+		ActualVersion:   "{\"cloud\": 10, \"edge\": 5}",
 		Optional:        true,
-		ExpectedMeta:    "Updation",
-		ActualMeta:      "Updation",
+		ExpectedMeta:    "{\"timestamp\":159000000}",
+		ActualMeta:      "{\"timestamp\":159000000}",
 		AttrType:        "Temperature",
 	}
 	deviceTwin := createDeviceTwin(devTwin)
@@ -766,7 +775,10 @@ func TestBuildErrorResult(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			got, err := BuildErrorResult(test.para)
 			gotResult := Result{}
-			json.Unmarshal(got, &gotResult)
+			if err := json.Unmarshal(got, &gotResult); err != nil {
+				t.Errorf("failed to unmarshal, err: %v", err)
+				return
+			}
 			if !reflect.DeepEqual(err, test.wantErr) {
 				t.Errorf("BuildErrorResult() error = %v, wantErr %v", err, test.wantErr)
 				return

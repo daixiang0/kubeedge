@@ -43,8 +43,8 @@ func (dt *DeviceTwin) RegisterDTModule(name string) {
 func (dt *DeviceTwin) distributeMsg(m interface{}) error {
 	msg, ok := m.(model.Message)
 	if !ok {
-		klog.Errorf("Distribute message, msg is nil")
-		return errors.New("Distribute message, msg is nil")
+		klog.Errorf("empty distribute message")
+		return errors.New("empty distribute message")
 	}
 	message := dttype.DTMessage{Msg: &msg}
 	if message.Msg.GetParentID() != "" {
@@ -55,7 +55,7 @@ func (dt *DeviceTwin) distributeMsg(m interface{}) error {
 		}
 	}
 	if !classifyMsg(&message) {
-		return errors.New("Not found action")
+		return errors.New("not found action")
 	}
 	if ActionModuleMap == nil {
 		initActionModuleMap()
@@ -113,7 +113,7 @@ func SyncSqlite(context *dtcontext.DTContext) error {
 	klog.Info("Begin to sync sqlite ")
 	rows, queryErr := dtclient.QueryDeviceAll()
 	if queryErr != nil {
-		klog.Errorf("Query sqlite failed while syncing sqlite, err: %#v", queryErr)
+		klog.Errorf("%v", queryErr)
 		return queryErr
 	}
 	if rows == nil {

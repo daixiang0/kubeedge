@@ -214,7 +214,7 @@ func TestDealDeviceStateUpdate(t *testing.T) {
 			resource: "DeviceB",
 			msg:      &model.Message{Content: bytesEmptyDevUpdate},
 			want:     nil,
-			wantErr:  nil,
+			wantErr:  errors.New("device DeviceB does not exist"),
 		},
 		{
 			name:     "dealDeviceStateUpdateTest-DeviceExist",
@@ -222,7 +222,7 @@ func TestDealDeviceStateUpdate(t *testing.T) {
 			resource: "DeviceC",
 			msg:      &model.Message{Content: bytesEmptyDevUpdate},
 			want:     nil,
-			wantErr:  nil,
+			wantErr:  errors.New("invalid device info: DeviceC"),
 		},
 		{
 			name:     "dealDeviceStateUpdateTest-CorrectDeviceType",

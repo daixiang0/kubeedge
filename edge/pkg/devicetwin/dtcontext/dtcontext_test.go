@@ -49,7 +49,7 @@ func TestCommTo(t *testing.T) {
 			name:       "ModuleNotPresent",
 			modulename: "ModuleA",
 			content:    nil,
-			wantErr:    errors.New("Not found chan to communicate"),
+			wantErr:    errors.New("not found chan to communicate"),
 		},
 		{
 			//Success Case
@@ -363,7 +363,7 @@ func TestSend(t *testing.T) {
 			action:    dtcommon.SendToCloud,
 			module:    dtcommon.CommModule,
 			msg:       msg,
-			wantError: errors.New("Not found chan to communicate"),
+			wantError: errors.New("not found chan to communicate"),
 		},
 		{
 			//Success Case

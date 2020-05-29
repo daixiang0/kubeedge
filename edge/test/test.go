@@ -81,7 +81,9 @@ func GetPodListFromEdged(w http.ResponseWriter) error {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(respBody)
+	if _, err := w.Write(respBody); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -99,12 +101,16 @@ func (tm *testManager) podHandler(w http.ResponseWriter, req *http.Request) {
 		body, err := ioutil.ReadAll(req.Body)
 		if err != nil {
 			klog.Errorf("read body error %v", err)
-			w.Write([]byte("read request body error"))
+			if _, err := w.Write([]byte("read request body error")); err != nil {
+				klog.Errorf("failed to send, err: %v", err)
+			}
 		}
 		klog.Infof("request body is %s\n", string(body))
 		if err = json.Unmarshal(body, &p); err != nil {
 			klog.Errorf("unmarshal request body error %v", err)
-			w.Write([]byte("unmarshal request body error"))
+			if _, err := w.Write([]byte("unmarshal request body error")); err != nil {
+				klog.Errorf("failed to send, err: %v", err)
+			}
 		}
 
 		switch req.Method {
@@ -135,13 +141,17 @@ func (tm *testManager) deviceHandler(w http.ResponseWriter, req *http.Request) {
 		body, err := ioutil.ReadAll(req.Body)
 		if err != nil {
 			klog.Errorf("read body error %v", err)
-			w.Write([]byte("read request body error"))
+			if _, err := w.Write([]byte("read request body error")); err != nil {
+				klog.Errorf("failed to send, err: %v", err)
+			}
 		}
 		klog.Infof("request body is %s\n", string(body))
 		err = json.Unmarshal(body, &Content)
 		if err != nil {
 			klog.Errorf("unmarshal request body error %v", err)
-			w.Write([]byte("unmarshal request body error"))
+			if _, err := w.Write([]byte("unmarshal request body error")); err != nil {
+				klog.Errorf("failed to send, err: %v", err)
+			}
 		}
 		switch req.Method {
 		case http.MethodPost:
@@ -164,12 +174,16 @@ func (tm *testManager) secretHandler(w http.ResponseWriter, req *http.Request) {
 		body, err := ioutil.ReadAll(req.Body)
 		if err != nil {
 			klog.Errorf("read body error %v", err)
-			w.Write([]byte("read request body error"))
+			if _, err := w.Write([]byte("read request body error")); err != nil {
+				klog.Errorf("failed to send, err: %v", err)
+			}
 		}
 		klog.Infof("request body is %s\n", string(body))
 		if err = json.Unmarshal(body, &p); err != nil {
 			klog.Errorf("unmarshal request body error %v", err)
-			w.Write([]byte("unmarshal request body error"))
+			if _, err := w.Write([]byte("unmarshal request body error")); err != nil {
+				klog.Errorf("failed to send, err: %v", err)
+			}
 		}
 
 		switch req.Method {
@@ -194,12 +208,16 @@ func (tm *testManager) configmapHandler(w http.ResponseWriter, req *http.Request
 		body, err := ioutil.ReadAll(req.Body)
 		if err != nil {
 			klog.Errorf("read body error %v", err)
-			w.Write([]byte("read request body error"))
+			if _, err := w.Write([]byte("read request body error")); err != nil {
+				klog.Errorf("failed to send, err: %v", err)
+			}
 		}
 		klog.Infof("request body is %s\n", string(body))
 		if err = json.Unmarshal(body, &p); err != nil {
 			klog.Errorf("unmarshal request body error %v", err)
-			w.Write([]byte("unmarshal request body error"))
+			if _, err := w.Write([]byte("unmarshal request body error")); err != nil {
+				klog.Errorf("failed to send, err: %v", err)
+			}
 		}
 
 		switch req.Method {

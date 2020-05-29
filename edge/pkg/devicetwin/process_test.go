@@ -150,7 +150,7 @@ func TestDTController_distributeMsg(t *testing.T) {
 			//Failure Case
 			name:    "distributeMsgTest-NilMessage",
 			message: "",
-			wantErr: errors.New("Distribute message, msg is nil"),
+			wantErr: errors.New("empty distribute message"),
 		},
 		{
 			//Failure Case
@@ -161,13 +161,13 @@ func TestDTController_distributeMsg(t *testing.T) {
 					Resource: "membership/detail",
 				},
 			},
-			wantErr: errors.New("Not found action"),
+			wantErr: errors.New("not found action"),
 		},
 		{
 			//Failure Case
 			name:    "distributeMsgTest-ActualMessage-NoChanel",
 			message: *msg,
-			wantErr: errors.New("Not found chan to communicate"),
+			wantErr: errors.New("not found chan to communicate"),
 		},
 	}
 	for _, tt := range tests {
@@ -239,11 +239,11 @@ func TestSyncSqlite(t *testing.T) {
 			//Failure Case
 			name:                  "SyncSqliteTest-QuerySqliteFailed",
 			context:               dtContexts,
-			wantErr:               errors.New("Query sqlite failed while syncing sqlite"),
+			wantErr:               errors.New("failed to query, err: Query sqlite failed while syncing sqlite"),
 			filterReturn:          querySeterMock,
 			queryTableReturn:      querySeterMock,
 			allReturnIntDevice:    int64(0),
-			allReturnErrDevice:    errors.New("Query sqlite failed while syncing sqlite"),
+			allReturnErrDevice:    errors.New("failed to query, err: Query sqlite failed while syncing sqlite"),
 			allReturnIntAttribute: int64(0),
 			allReturnErrAttribute: nil,
 			allReturnIntTwin:      int64(0),

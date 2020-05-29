@@ -100,19 +100,25 @@ func UpdateDeviceAttrMulti(updates []DeviceAttrUpdate) error {
 func DeviceAttrTrans(adds []DeviceAttr, deletes []DeviceDelete, updates []DeviceAttrUpdate) error {
 	var err error
 	obm := dbm.DBAccess
-	obm.Begin()
+	if err := obm.Begin(); err != nil {
+		return err
+	}
 	for _, add := range adds {
 		err = SaveDeviceAttr(&add)
 		if err != nil {
-			obm.Rollback()
+			if err := obm.Rollback(); err != nil {
+				return err
+			}
 			return err
 		}
 	}
 
-	for _, delete := range deletes {
-		err = DeleteDeviceAttr(delete.DeviceID, delete.Name)
+	for _, d := range deletes {
+		err = DeleteDeviceAttr(d.DeviceID, d.Name)
 		if err != nil {
-			obm.Rollback()
+			if err := obm.Rollback(); err != nil {
+				return err
+			}
 			return err
 		}
 	}
@@ -120,10 +126,14 @@ func DeviceAttrTrans(adds []DeviceAttr, deletes []DeviceDelete, updates []Device
 	for _, update := range updates {
 		err = UpdateDeviceAttrFields(update.DeviceID, update.Name, update.Cols)
 		if err != nil {
-			obm.Rollback()
+			if err := obm.Rollback(); err != nil {
+				return err
+			}
 			return err
 		}
 	}
-	obm.Commit()
+	if err := obm.Commit(); err != nil {
+		return err
+	}
 	return nil
 }

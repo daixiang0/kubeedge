@@ -670,7 +670,7 @@ func (e *edged) initializeModules() error {
 
 		// trigger on-demand stats collection once so that we have capacity information for ephemeral storage.
 		// ignore any errors, since if stats collection is not successful, the container manager will fail to start below.
-		e.StatsProvider.GetCgroupStats("/", true)
+		_, _, _ = e.StatsProvider.GetCgroupStats("/", true)
 	}
 	// Start container manager.
 	node, err := e.initialNode()
@@ -1206,7 +1206,9 @@ func (e *edged) addPod(obj interface{}) {
 	otherpods := e.podManager.GetPods()
 	attrs.OtherPods = otherpods
 	nodeInfo := schedulercache.NewNodeInfo(pod)
-	e.containerManager.UpdatePluginResources(nodeInfo, attrs)
+	if err := e.containerManager.UpdatePluginResources(nodeInfo, attrs); err != nil {
+		klog.Fatalf("failed to update plugin resources, err: %v", err)
+	}
 	key := types.NamespacedName{
 		Namespace: pod.Namespace,
 		Name:      pod.Name,
