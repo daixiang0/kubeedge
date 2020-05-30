@@ -218,7 +218,7 @@ kubeedge::golang::build_binaries() {
   docker rm -f kubeedge_build &>/dev/null || true
 
   docker run -itd --name kubeedge_build -v ${KUBEEDGE_ROOT}:/go/src/github.com/kubeedge/kubeedge \
-    -w /go/src/github.com/kubeedge/kubeedge golang:1.13
+    -w /go/src/github.com/kubeedge/kubeedge golang:1.13-stretch
   docker exec -i kubeedge_build bash -c "go mod download; apt-get update && apt-get install -y gcc-aarch64-linux-gnu gcc-arm-linux-gnueabi"
 
   for bin in ${binaries[@]}; do
