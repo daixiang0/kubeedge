@@ -168,7 +168,8 @@ func TestDealDeviceStateUpdate(t *testing.T) {
 		return
 	}
 
-	dtContexts.DeviceList.Store("DeviceC", "DeviceC")
+	deviceC := &dttype.Device{}
+	dtContexts.DeviceList.Store("DeviceC", deviceC)
 	deviceD := &dttype.Device{}
 	dtContexts.DeviceList.Store("DeviceD", deviceD)
 	bytesEmptyDevUpdate, err := json.Marshal(emptyDevUpdate)
@@ -182,8 +183,6 @@ func TestDealDeviceStateUpdate(t *testing.T) {
 		t.Errorf("marshal error %v", err)
 		return
 	}
-
-
 
 	tests := []struct {
 		name     string
@@ -224,7 +223,7 @@ func TestDealDeviceStateUpdate(t *testing.T) {
 			resource: "DeviceC",
 			msg:      &model.Message{Content: bytesEmptyDevUpdate},
 			want:     nil,
-			wantErr:  errors.New("invalid device info: DeviceC"),
+			wantErr:  nil,
 		},
 		{
 			name:     "dealDeviceStateUpdateTest-CorrectDeviceType",

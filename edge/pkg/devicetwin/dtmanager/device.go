@@ -85,9 +85,7 @@ func dealDeviceStateUpdate(context *dtcontext.DTContext, deviceID string, msg in
 	if !ok {
 		return nil, fmt.Errorf("invalid device info: %+v", doc)
 	}
-	if strings.Compare("online", updateDevice.State) != 0 && strings.Compare("offline", updateDevice.State) != 0 && strings.Compare("unknown", updateDevice.State) != 0 {
-		return nil, fmt.Errorf("invalid device state: %s", updateDevice.State)
-	}
+
 	lastOnline := time.Now().Format("2006-01-02 15:04:05")
 	updateData := map[string]interface{}{
 		"state": updateDevice.State,
