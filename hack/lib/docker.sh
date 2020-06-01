@@ -26,11 +26,8 @@ kubeedge::docker::build_images(){
   local binArg="$@"
 
   case $binArg in
-    cloudcore | admission | csidriver)
+    cloudcore | admission | csidriver | edgecore | edgesite)
       kubeedge::docker::origin_build $binArg
-      ;;
-    edgecore | edgesite)
-      kubeedge::docker::qemu_build $binArg
       ;;
     bluetooth)
       kubeedge::docker::mapper_build $binArg
@@ -41,33 +38,15 @@ kubeedge::docker::build_images(){
 }
 
 kubeedge::docker::all_build() {
-  local origin_components="cloudcore admission csidriver"
+  local origin_components="cloudcore admission csidriver edgecore edgesite"
   for component in $origin_components; do
     kubeedge::docker::origin_build $component
-  done
-
-  local qemu_components="edgecore edgesite"
-  for component in $qemu_components; do
-    kubeedge::docker::qemu_build $component
   done
 }
 
 kubeedge::docker::origin_build() {
   local component="$1"
   docker build --build-arg GO_LDFLAGS="${GO_LDFLAGS}" -t "kubeedge/${component}:${VERSION}" -f ${KUBEEDGE_ROOT}/build/${component}/Dockerfile ${KUBEEDGE_ROOT}
-}
-
-kubeedge::docker::qemu_build() {
-  local component="$1"
-  rm -rf ${KUBEEDGE_ROOT}/build/${component}/tmp
-  mkdir -p ${KUBEEDGE_ROOT}/build/${component}/tmp
-  curl -L -o ${KUBEEDGE_ROOT}/build/${component}/tmp/qemu-${QEMU_ARCH}-static.tar.gz https://github.com/multiarch/qemu-user-static/releases/download/v3.0.0/qemu-${QEMU_ARCH}-static.tar.gz
-  tar -xzf ${KUBEEDGE_ROOT}/build/${component}/tmp/qemu-${QEMU_ARCH}-static.tar.gz -C ${KUBEEDGE_ROOT}/build/${component}/tmp
-  docker build -t kubeedge/${component}:${VERSION} \
-    --build-arg GO_LDFLAGS="${GO_LDFLAGS}" \
-    --build-arg BUILD_FROM=${ARCH}/golang:1.13.8-alpine3.10 \
-    --build-arg RUN_FROM=${ARCH}/docker:dind \
-    -f ${KUBEEDGE_ROOT}/build/${component}/Dockerfile ${KUBEEDGE_ROOT}
 }
 
 kubeedge::docker::mapper_build() {

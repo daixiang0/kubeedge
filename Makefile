@@ -115,6 +115,7 @@ integrationtest:
 	edge/test/integration/scripts/execute.sh
 endif
 
+ARCH ?= amd64
 ARCH_VALUES=amd64 \
 		 arm \
 		 arm64
@@ -199,8 +200,6 @@ clean:
 	hack/make-rules/clean.sh
 endif
 
-QEMU_ARCH ?= x86_64
-ARCH ?= amd64
 VERSION ?= $(shell git describe --tags)
 
 define RELEASE_HELP_INFO
