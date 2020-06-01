@@ -2,7 +2,6 @@
 
 1. If this is your first time, please read our contributor guidelines: https://github.com/kubeedge/kubeedge/blob/master/CONTRIBUTING.md
 2. Ensure you have added or ran the appropriate tests for your PR
-3. Keep PR title verbose enough and add prefix telling about what components it touches e.g "cloudcore:" or ".*:"
 
 -->
 
