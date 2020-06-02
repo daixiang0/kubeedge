@@ -167,7 +167,6 @@ type edged struct {
 	// dns config
 	dnsConfigurer             *kubedns.Configurer
 	hostname                  string
-	namespace                 string
 	nodeName                  string
 	runtimeCache              kubecontainer.RuntimeCache
 	interfaceName             string
@@ -395,7 +394,6 @@ func newEdged(enable bool) (*edged, error) {
 	ed := &edged{
 		nodeName:                  edgedconfig.Config.HostnameOverride,
 		interfaceName:             edgedconfig.Config.InterfaceName,
-		namespace:                 edgedconfig.Config.RegisterNodeNamespace,
 		containerRuntimeName:      edgedconfig.Config.RuntimeType,
 		gpuPluginEnabled:          edgedconfig.Config.GPUPluginEnabled,
 		cgroupDriver:              edgedconfig.Config.CGroupDriver,
@@ -964,7 +962,7 @@ func (e *edged) syncPod() {
 	time.Sleep(10 * time.Second)
 
 	//send msg to metamanager to get existing pods
-	info := model.NewMessage("").BuildRouter(e.Name(), e.Group(), e.namespace+"/"+model.ResourceTypePod,
+	info := model.NewMessage("").BuildRouter(e.Name(), e.Group(), e.hostname+"/"+model.ResourceTypePod,
 		model.QueryOperation)
 	beehiveContext.Send(metamanager.MetaManagerModuleName, *info)
 	for {
@@ -1246,7 +1244,7 @@ func (e *edged) deletePod(obj interface{}) {
 func (e *edged) getSecretsFromMetaManager(pod *v1.Pod) ([]v1.Secret, error) {
 	var secrets []v1.Secret
 	for _, imagePullSecret := range pod.Spec.ImagePullSecrets {
-		secret, err := e.metaClient.Secrets(e.namespace).Get(imagePullSecret.Name)
+		secret, err := e.metaClient.Secrets(pod.Namespace).Get(imagePullSecret.Name)
 		if err != nil {
 			return nil, err
 		}

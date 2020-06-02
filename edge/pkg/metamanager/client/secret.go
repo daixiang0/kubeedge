@@ -26,14 +26,14 @@ type SecretsInterface interface {
 }
 
 type secrets struct {
-	namespace string
-	send      SendInterface
+	name string
+	send SendInterface
 }
 
-func newSecrets(namespace string, s SendInterface) *secrets {
+func newSecrets(n string, s SendInterface) *secrets {
 	return &secrets{
-		send:      s,
-		namespace: namespace,
+		send: s,
+		name: n,
 	}
 }
 
@@ -50,7 +50,7 @@ func (c *secrets) Delete(name string) error {
 }
 
 func (c *secrets) Get(name string) (*api.Secret, error) {
-	resource := fmt.Sprintf("%s/%s/%s", c.namespace, model.ResourceTypeSecret, name)
+	resource := fmt.Sprintf("%s/%s/%s", c.name, model.ResourceTypeSecret, name)
 	secretMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.QueryOperation, nil)
 	msg, err := c.send.SendSync(secretMsg)
 	if err != nil {

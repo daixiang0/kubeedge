@@ -24,14 +24,14 @@ type PodsInterface interface {
 }
 
 type pods struct {
-	namespace string
-	send      SendInterface
+	name string
+	send SendInterface
 }
 
-func newPods(namespace string, s SendInterface) *pods {
+func newPods(n string, s SendInterface) *pods {
 	return &pods{
-		send:      s,
-		namespace: namespace,
+		send: s,
+		name: n,
 	}
 }
 
@@ -44,7 +44,7 @@ func (c *pods) Update(cm *corev1.Pod) error {
 }
 
 func (c *pods) Delete(name, options string) error {
-	resource := fmt.Sprintf("%s/%s/%s", c.namespace, model.ResourceTypePod, name)
+	resource := fmt.Sprintf("%s/%s/%s", c.name, model.ResourceTypePod, name)
 	podDeleteMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.DeleteOperation, options)
 	c.send.Send(podDeleteMsg)
 	return nil

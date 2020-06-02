@@ -15,7 +15,7 @@ import (
 
 // ServiceGetter interface
 type ServiceGetter interface {
-	Services(namespace string) ServiceInterface
+	Services(nodeName string) ServiceInterface
 }
 
 // ServiceInterface is an interface
@@ -29,14 +29,14 @@ type ServiceInterface interface {
 }
 
 type services struct {
-	namespace string
-	send      SendInterface
+	name string
+	send SendInterface
 }
 
-func newServices(namespace string, s SendInterface) *services {
+func newServices(n string, s SendInterface) *services {
 	return &services{
-		namespace: namespace,
-		send:      s,
+		name: n,
+		send: s,
 	}
 }
 
@@ -53,7 +53,7 @@ func (s *services) Delete(name string) error {
 }
 
 func (s *services) GetPods(name string) ([]v1.Pod, error) {
-	resource := fmt.Sprintf("%s/%s/%s", s.namespace, model.ResourceTypePodlist, name)
+	resource := fmt.Sprintf("%s/%s", model.ResourceTypePodlist, name)
 	msg := message.BuildMsg(modules.MetaGroup, "", constant.ModuleNameEdgeMesh, resource, model.QueryOperation, nil)
 	respMsg, err := s.send.SendSync(msg)
 	if err != nil {
@@ -105,7 +105,7 @@ func handleServicePodListFromMetaManager(content []byte) ([]v1.Pod, error) {
 }
 
 func (s *services) Get(name string) (*v1.Service, error) {
-	resource := fmt.Sprintf("%s/%s/%s", s.namespace, constants.ResourceTypeService, name)
+	resource := fmt.Sprintf("%s/%s", constants.ResourceTypeService, name)
 	msg := message.BuildMsg(modules.MetaGroup, "", constant.ModuleNameEdgeMesh, resource, model.QueryOperation, nil)
 	respMsg, err := s.send.SendSync(msg)
 	if err != nil {
@@ -157,8 +157,7 @@ func handleServiceFromMetaManager(content []byte) (*v1.Service, error) {
 }
 
 func (s *services) ListAll() ([]v1.Service, error) {
-	resource := fmt.Sprintf("%s/%s", s.namespace, constants.ResourceTypeService)
-	msg := message.BuildMsg(modules.MetaGroup, "", constant.ModuleNameEdgeMesh, resource, model.QueryOperation, nil)
+	msg := message.BuildMsg(modules.MetaGroup, "", constant.ModuleNameEdgeMesh, constants.ResourceTypeService, model.QueryOperation, nil)
 	respMsg, err := s.send.SendSync(msg)
 	if err != nil {
 		return nil, fmt.Errorf("get service list from metaManager failed, err: %v", err)

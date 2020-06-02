@@ -26,14 +26,14 @@ type NodesInterface interface {
 }
 
 type nodes struct {
-	namespace string
-	send      SendInterface
+	name string
+	send SendInterface
 }
 
-func newNodes(namespace string, s SendInterface) *nodes {
+func newNodes(n string, s SendInterface) *nodes {
 	return &nodes{
-		send:      s,
-		namespace: namespace,
+		send: s,
+		name: n,
 	}
 }
 
@@ -42,7 +42,7 @@ func (c *nodes) Create(cm *api.Node) (*api.Node, error) {
 }
 
 func (c *nodes) Update(cm *api.Node) error {
-	resource := fmt.Sprintf("%s/%s/%s", c.namespace, model.ResourceTypeNode, cm.Name)
+	resource := fmt.Sprintf("%s/%s/%s", c.name, model.ResourceTypeNode, cm.Name)
 	nodeMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.UpdateOperation, cm)
 	_, err := c.send.SendSync(nodeMsg)
 	if err != nil {
@@ -56,7 +56,7 @@ func (c *nodes) Delete(name string) error {
 }
 
 func (c *nodes) Get(name string) (*api.Node, error) {
-	resource := fmt.Sprintf("%s/%s/%s", c.namespace, model.ResourceTypeNode, name)
+	resource := fmt.Sprintf("%s/%s/%s", c.name, model.ResourceTypeNode, name)
 	nodeMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.QueryOperation, nil)
 	msg, err := c.send.SendSync(nodeMsg)
 	if err != nil {

@@ -27,14 +27,14 @@ type PersistentVolumesInterface interface {
 }
 
 type persistentvolumes struct {
-	namespace string
-	send      SendInterface
+	name string
+	send SendInterface
 }
 
 func newPersistentVolumes(n string, s SendInterface) *persistentvolumes {
 	return &persistentvolumes{
-		namespace: n,
-		send:      s,
+		name: n,
+		send: s,
 	}
 }
 
@@ -51,7 +51,7 @@ func (c *persistentvolumes) Delete(name string) error {
 }
 
 func (c *persistentvolumes) Get(name string, options metav1.GetOptions) (*api.PersistentVolume, error) {
-	resource := fmt.Sprintf("%s/%s/%s", c.namespace, "persistentvolume", name)
+	resource := fmt.Sprintf("%s/%s/%s", c.name, "persistentvolume", name)
 	pvMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.QueryOperation, nil)
 	msg, err := c.send.SendSync(pvMsg)
 	if err != nil {

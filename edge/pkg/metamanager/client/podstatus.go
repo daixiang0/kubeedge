@@ -24,14 +24,14 @@ type PodStatusInterface interface {
 }
 
 type podStatus struct {
-	namespace string
-	send      SendInterface
+	name string
+	send SendInterface
 }
 
-func newPodStatus(namespace string, s SendInterface) *podStatus {
+func newPodStatus(n string, s SendInterface) *podStatus {
 	return &podStatus{
-		send:      s,
-		namespace: namespace,
+		send: s,
+		name: n,
 	}
 }
 
@@ -40,7 +40,7 @@ func (c *podStatus) Create(ps *edgeapi.PodStatusRequest) (*edgeapi.PodStatusRequ
 }
 
 func (c *podStatus) Update(rsName string, ps edgeapi.PodStatusRequest) error {
-	podStatusMsg := message.BuildMsg(commodule.MetaGroup, "", commodule.EdgedModuleName, c.namespace+"/"+model.ResourceTypePodStatus+"/"+rsName, model.UpdateOperation, ps)
+	podStatusMsg := message.BuildMsg(commodule.MetaGroup, "", commodule.EdgedModuleName, c.name+"/"+model.ResourceTypePodStatus+"/"+rsName, model.UpdateOperation, ps)
 	_, err := c.send.SendSync(podStatusMsg)
 	if err != nil {
 		return fmt.Errorf("update podstatus failed, err: %v", err)

@@ -29,14 +29,14 @@ type EndpointsInterface interface {
 
 // Endpoints is struct implementing EndpointsInterface
 type Endpoints struct {
-	namespace string
-	send      SendInterface
+	name string
+	send SendInterface
 }
 
-func newEndpoints(namespace string, s SendInterface) *Endpoints {
+func newEndpoints(n string, s SendInterface) *Endpoints {
 	return &Endpoints{
-		send:      s,
-		namespace: namespace,
+		send: s,
+		name: n,
 	}
 }
 
@@ -57,7 +57,7 @@ func (c *Endpoints) Delete(name string) error {
 
 // Get Endpoints
 func (c *Endpoints) Get(name string) (*api.Endpoints, error) {
-	resource := fmt.Sprintf("%s/%s/%s", c.namespace, constants.ResourceTypeEndpoints, name)
+	resource := fmt.Sprintf("%s/%s/%s", c.name, constants.ResourceTypeEndpoints, name)
 	endpointMsg := message.BuildMsg(modules.MetaGroup, "", constant.ModuleNameEdgeMesh, resource, model.QueryOperation, nil)
 	msg, err := c.send.SendSync(endpointMsg)
 	if err != nil {

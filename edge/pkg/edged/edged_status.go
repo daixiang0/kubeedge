@@ -389,7 +389,7 @@ func (e *edged) registerNode() error {
 
 	klog.Infof("Attempting to register node %s", e.nodeName)
 
-	resource := fmt.Sprintf("%s/%s/%s", e.namespace, model.ResourceTypeNodeStatus, e.nodeName)
+	resource := fmt.Sprintf("%s/%s", model.ResourceTypeNodeStatus, e.nodeName)
 	nodeInfoMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.InsertOperation, node)
 	res, err := beehiveContext.SendSync(edgehub.ModuleNameEdgeHub, *nodeInfoMsg, syncMsgRespTimeout)
 	if err != nil || res.Content != "OK" {
@@ -410,7 +410,7 @@ func (e *edged) updateNodeStatus() error {
 		return err
 	}
 
-	err = e.metaClient.NodeStatus(e.namespace).Update(e.nodeName, *nodeStatus)
+	err = e.metaClient.NodeStatus(e.nodeName).Update(e.nodeName, *nodeStatus)
 	if err != nil {
 		klog.Errorf("update node failed, error: %v", err)
 	}

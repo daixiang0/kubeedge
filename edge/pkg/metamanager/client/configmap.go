@@ -27,14 +27,14 @@ type ConfigMapsInterface interface {
 }
 
 type configMaps struct {
-	namespace string
-	send      SendInterface
+	name string
+	send SendInterface
 }
 
-func newConfigMaps(namespace string, s SendInterface) *configMaps {
+func newConfigMaps(n string, s SendInterface) *configMaps {
 	return &configMaps{
-		send:      s,
-		namespace: namespace,
+		send: s,
+		name: n,
 	}
 }
 
@@ -51,7 +51,7 @@ func (c *configMaps) Delete(name string) error {
 }
 
 func (c *configMaps) Get(name string) (*api.ConfigMap, error) {
-	resource := fmt.Sprintf("%s/%s/%s", c.namespace, model.ResourceTypeConfigmap, name)
+	resource := fmt.Sprintf("%s/%s/%s", c.name, model.ResourceTypeConfigmap, name)
 	configMapMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.QueryOperation, nil)
 	msg, err := c.send.SendSync(configMapMsg)
 	if err != nil {

@@ -56,8 +56,8 @@ func (m *metaClient) Secrets(namespace string) SecretsInterface {
 	return newSecrets(namespace, m.send)
 }
 
-func (m *metaClient) PodStatus(namespace string) PodStatusInterface {
-	return newPodStatus(namespace, m.send)
+func (m *metaClient) PodStatus(podName string) PodStatusInterface {
+	return newPodStatus(podName, m.send)
 }
 
 //New creates a new metaclient
