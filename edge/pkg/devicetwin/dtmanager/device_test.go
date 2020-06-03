@@ -170,6 +170,16 @@ func TestDealDeviceStateUpdate(t *testing.T) {
 
 	deviceC := &dttype.Device{}
 	dtContexts.DeviceList.Store("DeviceC", deviceC)
+	ormerMock.EXPECT().Begin().Return(nil).Times(1)
+	ormerMock.EXPECT().Insert(gomock.Any()).Return(int64(1), nil).Times(1)
+	ormerMock.EXPECT().Commit().Return(nil).Times(1)
+	if _, err = ormerMock.Insert(dtclient.Device{
+		ID:    "DeviceC",
+		State: "offline",
+	}); err != nil {
+		t.Error(err)
+		return
+	}
 	deviceD := &dttype.Device{}
 	dtContexts.DeviceList.Store("DeviceD", deviceD)
 	bytesEmptyDevUpdate, err := json.Marshal(emptyDevUpdate)
@@ -251,7 +261,7 @@ func TestDealDeviceStateUpdate(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(test.times)
 			querySeterMock.EXPECT().Update(gomock.Any()).Return(test.updateReturnInt, test.updateReturnErr).Times(test.times)
-			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(test.times)
+			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(6)
 			got, err := dealDeviceStateUpdate(test.context, test.resource, test.msg)
 			if !reflect.DeepEqual(err, test.wantErr) {
 				t.Errorf("dealDeviceStateUpdate() error = %v, wantErr %v", err, test.wantErr)

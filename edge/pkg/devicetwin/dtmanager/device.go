@@ -86,6 +86,13 @@ func dealDeviceStateUpdate(context *dtcontext.DTContext, deviceID string, msg in
 		return nil, fmt.Errorf("invalid device info: %+v", doc)
 	}
 
+  ds, err := dtclient.QueryDeviceAll()
+  if err != nil {
+    klog.Errorf("%v", err)
+  }
+  for _, d := range ds {
+    klog.Errorf("%v",d)
+  }
 	lastOnline := time.Now().Format("2006-01-02 15:04:05")
 	updateData := map[string]interface{}{
 		"state": updateDevice.State,
