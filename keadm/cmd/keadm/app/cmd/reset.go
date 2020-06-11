@@ -45,9 +45,9 @@ keadm reset
 )
 
 // NewKubeEdgeReset represents the reset command
-func NewKubeEdgeReset(out io.Writer, init *types.InitOptions) *cobra.Command {
-	if init == nil {
-		init = newInitOptions()
+func NewKubeEdgeReset(out io.Writer, reset *types.ResetOptions) *cobra.Command {
+	if reset == nil {
+		reset = newResetOptions()
 	}
 
 	flagVals := make(map[string]types.FlagData)
@@ -82,43 +82,45 @@ func NewKubeEdgeReset(out io.Writer, init *types.InitOptions) *cobra.Command {
 
 			// Tear down edge node. It includes
 			// 1. killing edgecore process, but don't delete node from K8s
-			return TearDownKubeEdge(IsEdgeNode, init)
+			return TearDownKubeEdge(IsEdgeNode, reset)
 		},
 	}
 
-	addResetFlags(cmd, init)
+	addResetFlags(cmd, reset)
 
 	return cmd
 }
 
-//newInitOptions will initialise new instance of options everytime
-func newInitOptions() *types.InitOptions {
-	opts := &types.InitOptions{}
+//newResetOptions will initialise new instance of options everytime
+func newResetOptions() *types.ResetOptions {
+	opts := &types.ResetOptions{}
 	opts.KubeConfig = types.DefaultKubeConfig
 	return opts
 }
 
-func addResetFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
-	cmd.Flags().StringVar(&initOpts.KubeConfig, types.KubeConfig, initOpts.KubeConfig,
+func addResetFlags(cmd *cobra.Command, resetOptions *types.ResetOptions) {
+	cmd.Flags().StringVar(&resetOptions.KubeConfig, types.KubeConfig, resetOptions.KubeConfig,
 		"Use this key to set kube-config path, eg: $HOME/.kube/config")
 
-	cmd.Flags().StringVar(&initOpts.Master, types.Master, initOpts.Master,
+	cmd.Flags().StringVar(&resetOptions.Master, types.Master, resetOptions.Master,
 		"Use this key to set K8s master address, eg: http://127.0.0.1:8080")
+
+	cmd.Flags().BoolVar(&resetOptions.Prune, types.Prune, resetOptions.Prune, "Prune all or not, default is false")
 }
 
 // TearDownKubeEdge will bring down either cloud or edge components,
 // depending upon in which type of node it is executed
-func TearDownKubeEdge(isEdgeNode bool, initOptions *types.InitOptions) error {
+func TearDownKubeEdge(isEdgeNode bool, options *types.ResetOptions) error {
 	var ke types.ToolsInstaller
 	common := util.Common{
-		KubeConfig: initOptions.KubeConfig,
-		Master:     initOptions.Master,
+		KubeConfig: options.KubeConfig,
+		Master:     options.Master,
 	}
 	ke = &util.KubeCloudInstTool{Common: common}
 	if isEdgeNode {
 		ke = &util.KubeEdgeInstTool{Common: common}
 	}
 
-	err := ke.TearDown()
+	err := ke.TearDown(options.Prune)
 	return err
 }

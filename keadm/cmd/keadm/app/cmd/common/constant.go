@@ -77,4 +77,6 @@ const (
 	TokenSecretName = "tokensecret"
 
 	TokenDataName = "tokendata"
+
+	Prune = "prune"
 )

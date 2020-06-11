@@ -150,12 +150,20 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 }
 
 //TearDown method will remove the edge node from api-server and stop edgecore process
-func (ku *KubeEdgeInstTool) TearDown() error {
+func (ku *KubeEdgeInstTool) TearDown(prune bool) error {
 	ku.SetOSInterface(GetOSInterface())
 	ku.SetKubeEdgeVersion(ku.ToolVersion)
 
-	//Kill edge core process
-	ku.KillKubeEdgeBinary(KubeEdgeBinaryName)
+	if err := ku.KillKubeEdgeBinary(KubeEdgeBinaryName); err != nil {
+		fmt.Printf("failed to stop edgecore: %v", err)
+	}
+
+	if prune {
+		cmd := fmt.Sprintf("rm -rf %s %s %s/%s", KubeEdgeLogPath, KubeEdgePath, KubeEdgeUsrBinPath, KubeEdgeBinaryName)
+		if _, err := runCommandWithExit(cmd); err != nil {
+			fmt.Printf("failed to prune all data: %v", err)
+		}
+	}
 
 	return nil
 }

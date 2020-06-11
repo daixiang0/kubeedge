@@ -20,11 +20,15 @@ import (
 	"time"
 )
 
+type BaseOptions struct {
+	KubeConfig       string
+	Master           string
+}
+
 //InitOptions has the kubeedge cloud init information filled by CLI
 type InitOptions struct {
 	KubeEdgeVersion  string
-	KubeConfig       string
-	Master           string
+	BaseOptions
 	AdvertiseAddress string
 }
 
@@ -39,6 +43,11 @@ type JoinOptions struct {
 	RemoteRuntimeEndpoint string
 	Token                 string
 	CertPort              string
+}
+
+type ResetOptions struct {
+	BaseOptions
+	Prune bool
 }
 
 type GettokenOptions struct {
@@ -77,7 +86,7 @@ const (
 //ToolsInstaller interface for tools with install and teardown methods.
 type ToolsInstaller interface {
 	InstallTools() error
-	TearDown() error
+	TearDown(bool) error
 }
 
 //OSTypeInstaller interface for methods to be executed over a specified OS distribution type

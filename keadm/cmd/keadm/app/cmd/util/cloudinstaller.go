@@ -181,7 +181,7 @@ func (cu *KubeCloudInstTool) RunCloudCore() error {
 }
 
 //TearDown method will remove the edge node from api-server and stop cloudcore process
-func (cu *KubeCloudInstTool) TearDown() error {
+func (cu *KubeCloudInstTool) TearDown(prune bool) error {
 	cu.SetOSInterface(GetOSInterface())
 
 	if version.Get().GitVersion >= "v1.3.0" {
@@ -228,7 +228,14 @@ func (cu *KubeCloudInstTool) TearDown() error {
 		}
 	} else {
 		if err := cu.KillKubeEdgeBinary(KubeCloudBinaryName); err != nil {
-			return err
+			fmt.Printf("failed to stop cloudcore: %v", err)
+		}
+
+		if prune {
+			cmd := fmt.Sprintf("rm -rf %s %s %s/%s", KubeEdgeLogPath, KubeEdgePath, KubeEdgeUsrBinPath, KubeCloudBinaryName)
+			if _, err := runCommandWithExit(cmd); err != nil {
+				fmt.Printf("failed to prune all data: %v", err)
+			}
 		}
 	}
 
