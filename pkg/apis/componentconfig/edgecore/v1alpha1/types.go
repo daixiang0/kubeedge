@@ -27,7 +27,7 @@ import (
 
 const (
 	EdgeMeshDefaultLoadBalanceStrategy = "RoundRobin"
-	EdgeMeshDefaultInterface           = "docker0"
+	EdgeMeshDefaultInterfaceAddr       = "169.254.251.4"
 	EdgeMeshDefaultSubNet              = "9.251.0.0/16"
 	EdgeMeshDefaultListenPort          = 40001
 )
@@ -426,6 +426,8 @@ type EdgeMesh struct {
 	// ListenInterface indicates the listen interface of EdgeMesh
 	// default "docker0"
 	ListenInterface string `json:"listenInterface,omitempty"`
+	// InterfaceAddr indicates the address of EdgeMesh interface
+	InterfaceAddr string `json:"InterfaceAddr,omitempty"`
 	// SubNet indicates the subnet of EdgeMesh
 	// default "9.251.0.0/16"
 	SubNet string `json:"subNet,omitempty"`
