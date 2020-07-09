@@ -44,7 +44,8 @@ jobs:
         - sudo apt-get install libc6-dev-arm64-cross -y
         - sudo apt-get install gcc-arm-linux-gnueabi -y
         - sudo apt-get install libc6-dev-armel-cross -y
-        - export GOFLAGS=-mod=vendor
+        # Explicitly set GOFLAGS to ignore vendor, since GOFLAGS=-mod=vendor breaks dependency resolution while rebuilding vendor
+        - export GOFLAGS=-mod=mod
       script:
         - make
         - make bluetoothdevice
@@ -55,7 +56,7 @@ jobs:
       arch: amd64
       before_script:
         - go get github.com/onsi/ginkgo/ginkgo
-        - export GOFLAGS=-mod=vendor
+        - export GOFLAGS=-mod=mod
       script:
         - make test
         - make integrationtest
@@ -64,8 +65,7 @@ jobs:
       before_script:
         - go get github.com/onsi/ginkgo/ginkgo
         - go get sigs.k8s.io/kind@v0.7.0
-        - go mod vendor
-        - export GOFLAGS=-mod=vendor
+        - export GOFLAGS=-mod=mod
         - sudo apt-get update && sudo apt-get install -y apt-transport-https
         - curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
         - echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee -a /etc/apt/sources.list.d/kubernetes.list
@@ -78,8 +78,7 @@ jobs:
       before_script:
         - go get github.com/onsi/ginkgo/ginkgo
         - go get sigs.k8s.io/kind@v0.7.0
-        - go mod vendor
-        - export GOFLAGS=-mod=vendor
+        - export GOFLAGS=-mod=mod
         - sudo apt-get update && sudo apt-get install -y apt-transport-https
         - curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
         - echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee -a /etc/apt/sources.list.d/kubernetes.list
@@ -100,7 +99,7 @@ jobs:
       name: "build, smallbuild"
       arch: arm64
       before_script:
-        - export GOFLAGS=-mod=vendor
+        - export GOFLAGS=-mod=mod
         - sudo apt-get install upx-ucl -y
       script:
         - make
@@ -109,7 +108,7 @@ jobs:
     - name: "unit test"
       arch: arm64
       before_script:
-        - export GOFLAGS=-mod=vendor
+        - export GOFLAGS=-mod=mod
       script:
         - make test
     - name: "build docker images on arm64"
