@@ -142,6 +142,8 @@ process_content () {
 #############################################################################
 
 export GO111MODULE=on
+# go list would fail with -mod=vendor since 1.14, see https://github.com/golang/go/issues/35589
+export GOFLAGS=-mod=mod
 
 # Check bash version
 if (( BASH_VERSINFO[0] < 4 )); then
