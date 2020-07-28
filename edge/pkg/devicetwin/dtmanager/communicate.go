@@ -77,17 +77,19 @@ func dealSendToEdge(context *dtcontext.DTContext, resource string, msg interface
 	return nil, nil
 }
 func dealSendToCloud(context *dtcontext.DTContext, resource string, msg interface{}) (interface{}, error) {
-	if strings.Compare(context.State, dtcommon.Disconnected) == 0 {
-		klog.Infof("[DtManager] skip send msg to cloud since disconnected")
-		return nil, nil
-	}
 	message, ok := msg.(*model.Message)
 	if !ok {
 		return nil, fmt.Errorf("invalid msg format, value: %v", msg)
 	}
-	beehiveContext.Send(dtcommon.HubModule, *message)
+
 	msgID := message.GetID()
 	context.ConfirmMap.Store(msgID, &dttype.DTMessage{Msg: message, Action: dtcommon.SendToCloud, Type: dtcommon.CommModule})
+
+	if strings.Compare(context.State, dtcommon.Disconnected) == 0 {
+		klog.Infof("[DtManager] skip send msg %s to cloud since disconnected", msgID)
+	} else {
+		beehiveContext.Send(dtcommon.HubModule, *message)
+	}
 	return nil, nil
 }
 func dealLifeCycle(context *dtcontext.DTContext, resource string, msg interface{}) (interface{}, error) {

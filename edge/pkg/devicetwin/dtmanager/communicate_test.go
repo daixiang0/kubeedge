@@ -165,22 +165,29 @@ func TestStartHeartBeat(t *testing.T) {
 
 // TestDealSendToCloud is function to test dealSendToCloud().
 func TestDealSendToCloud(t *testing.T) {
+	connectedCase, disconnectedCase := "dealSendToCloudTest-StateConnected", "dealSendToCloudTest-StateDisconnected"
 	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 
 	dtContextStateDisconnected, _ := dtcontext.InitDTContext()
 	dtContextStateConnected, _ := dtcontext.InitDTContext()
 	dtContextStateConnected.State = dtcommon.Connected
-	msg := &model.Message{
-		Header: model.MessageHeader{
-			ID: "message",
-		},
+
+	msgList, expectedMsgList := make(map[string]*model.Message), make(map[string]*dttype.DTMessage)
+	for _, s := range []string{connectedCase, disconnectedCase} {
+		msg := &model.Message{
+			Header: model.MessageHeader{
+				ID: s,
+			},
+		}
+		msgList[s] = msg
+
+		expectedMsgList[s] = &dttype.DTMessage{
+			Msg:    msg,
+			Action: dtcommon.SendToCloud,
+			Type:   dtcommon.CommModule,
+		}
 	}
 
-	expectedMessage := &dttype.DTMessage{
-		Msg:    msg,
-		Action: dtcommon.SendToCloud,
-		Type:   dtcommon.CommModule,
-	}
 	tests := []struct {
 		name     string
 		context  *dtcontext.DTContext
@@ -189,21 +196,21 @@ func TestDealSendToCloud(t *testing.T) {
 		wantErr  error
 	}{
 		{
-			name:    "dealSendToCloudTest-StateDisconnected",
+			name:    disconnectedCase,
 			context: dtContextStateDisconnected,
-			msg:     "",
+			msg:     msgList[disconnectedCase],
 			wantErr: nil,
 		},
 		{
-			name:    "dealSendToCloudTest-StateConnected",
+			name:    "dealSendToCloudTest-InvalidMsg",
 			context: dtContextStateConnected,
 			msg:     "",
 			wantErr: errors.New("invalid msg format, value: "),
 		},
 		{
-			name:    "dealSendToCloudTest-ActualMsg",
+			name:    connectedCase,
 			context: dtContextStateConnected,
-			msg:     msg,
+			msg:     msgList[connectedCase],
 			wantErr: nil,
 		},
 	}
@@ -215,13 +222,13 @@ func TestDealSendToCloud(t *testing.T) {
 				return
 			}
 			// Testing whether the message is properly stored in ConfirmMap of beehiveContext when correct message is passed
-			if err == nil && test.context.State == dtcommon.Connected {
-				gotMsg, exist := test.context.ConfirmMap.Load("message")
+			if err == nil {
+				gotMsg, exist := test.context.ConfirmMap.Load(test.name)
 				if !exist {
 					t.Errorf("dealSendToCloud() failed to store message in ConfirmMap")
 					return
 				}
-				if !reflect.DeepEqual(expectedMessage, gotMsg) {
+				if !reflect.DeepEqual(expectedMsgList[test.name], gotMsg) {
 					t.Errorf("dealSendToCloud() failed due to wrong gotMsg in ConfirmMap Got =%v Want=%v", test.msg, gotMsg)
 				}
 			}
