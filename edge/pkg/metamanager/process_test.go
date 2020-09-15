@@ -28,7 +28,6 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/mocks/beego"
-	"github.com/kubeedge/kubeedge/edge/mocks/beehive"
 	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
@@ -62,25 +61,9 @@ func TestProcessInsert(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	ormerMock := beego.NewMockOrmer(mockCtrl)
-	fakeEdged := beehive.NewMockModule(mockCtrl)
-	fakeEdgeHub := beehive.NewMockModule(mockCtrl)
-	fakeEdgeFunction := beehive.NewMockModule(mockCtrl)
+	querySeterMock := beego.NewMockQuerySeter(mockCtrl)
 	dbm.DBAccess = ormerMock
 
-	fakeEdgeHub.EXPECT().Enable().Return(ModuleNameEdgeHub).Times(3)
-	fakeEdgeHub.EXPECT().Name().Return(ModuleNameEdgeHub).Times(3)
-	fakeEdged.EXPECT().Name().Return(ModuleNameEdged).Times(3)
-	fakeEdgeFunction.EXPECT().Name().Return(EdgeFunctionModel).Times(3)
-
-	core.Register(fakeEdgeHub)
-	core.Register(fakeEdged)
-	core.Register(fakeEdgeFunction)
-	beehiveContext.AddModule(ModuleNameEdged)
-	beehiveContext.AddModule(ModuleNameEdgeHub)
-	beehiveContext.AddModuleGroup(ModuleNameEdgeHub, modules.HubGroup)
-	beehiveContext.AddModule(EdgeFunctionModel)
-
-	// metamanager module registration test case
 	core.Register(&metaManager{enable: true})
 	for name, module := range core.GetModules() {
 		if name == MetaManagerModuleName {
@@ -88,10 +71,7 @@ func TestProcessInsert(t *testing.T) {
 			break
 		}
 	}
-	if metaMgrModule == nil {
-		t.Errorf("can not get metaMgrModule")
-		return
-	}
+
 	t.Run("ModuleRegistration", func(t *testing.T) {
 		if metaMgrModule == nil {
 			t.Errorf("MetaManager Module not Registered with beehive core")
@@ -99,6 +79,10 @@ func TestProcessInsert(t *testing.T) {
 	})
 	beehiveContext.AddModule(metaMgrModule.Name())
 	beehiveContext.AddModuleGroup(metaMgrModule.Name(), metaMgrModule.Group())
+
+	ormerMock.EXPECT().QueryTable(gomock.Any()).Return(querySeterMock).Times(1)
+	querySeterMock.EXPECT().All(gomock.Any()).Return(int64(1), nil).Times(1)
+
 	metaMgrModule.Start()
 
 	//SaveMeta Failed, feedbackError SendToCloud
