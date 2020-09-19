@@ -109,37 +109,60 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 	return cmd
 }
 
+// checkProcessInContainer check process exist in container or not
+func checkProcessInContainer(process ps.Process) (bool, error) {
+	ppid := process.PPid()
+	for ppid != 1 {
+		parent, err := ps.FindProcess(ppid)
+		if err != nil {
+			return false, err
+		}
+		if parent.Executable() == "containerd-shim" {
+			return true, nil
+		}
+		ppid = parent.PPid()
+	}
+	return false, nil
+}
+
 // findProcess find a running process by name
-func findProcess(name string) (bool, error) {
+func findProcess(name string) (ps.Process, error) {
 	processes, err := ps.Processes()
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
 	for _, process := range processes {
 		if process.Executable() == name {
-			return true, nil
+			return process, nil
 		}
 	}
 
-	return false, nil
+	return nil, nil
 }
 
 // environmentCheck check the environment before edgecore start
 // if Check failed,  return errors
 func environmentCheck() error {
-	// if kubelet is running, return error
-	if find, err := findProcess("kubelet"); err != nil {
+	process, err := findProcess("kubelet")
+	if err != nil {
 		return err
-	} else if find {
-		return errors.New("Kubelet should not running on edge node when running edgecore")
+	}
+
+	// if kubelet is running at host, return error
+	if process != nil {
+		if exist, err := checkProcessInContainer(process); err != nil {
+			return err
+		} else if exist {
+			return errors.New("kubelet should not running on edge node when running edgecore")
+		}
 	}
 
 	// if kube-proxy is running, return error
-	if find, err := findProcess("kube-proxy"); err != nil {
+	if process, err = findProcess("kube-proxy"); err != nil {
 		return err
-	} else if find {
-		return errors.New("Kube-proxy should not running on edge node when running edgecore")
+	} else if process != nil {
+		return errors.New("kube-proxy should not running on edge node when running edgecore")
 	}
 
 	return nil
@@ -159,3 +182,4 @@ func registerModules(c *v1alpha1.EdgeCoreConfig) {
 	// Nodte: Need to put it to the end, and wait for all models to register before executing
 	dbm.InitDBConfig(c.DataBase.DriverName, c.DataBase.AliasName, c.DataBase.DataSource)
 }
+
