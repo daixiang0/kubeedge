@@ -228,6 +228,37 @@ keadm_e2e:
 	bash tests/e2e/scripts/keadm_e2e.sh
 endif
 
+KUBERNETES_TESTS = api-machinery \
+apps \
+instrumentation \
+network \
+node \
+scheduling \
+storage
+
+define KUBERNETES_E2E_HELP_INFO
+# kubernetes e2e test.
+#
+# Args:
+#   WHAT: test case names, support: $(KUBERNETES_TESTS)
+#         If not specified, will test all.
+#
+# Example:
+#   make kubernetes_e2e
+#   make kubernetes_e2e WHAT=node
+#   make kubernetes_e2e HELP=y
+#
+endef
+
+.PHONY: kubernetes_e2e
+ifeq ($(HELP),y)
+kubernetes_e2e:
+	@echo "$$KUBERNETES_E2E_HELP_INFO"
+else
+kubernetes_e2e:
+	bash tests/e2e/scripts/kubernetes_e2e.sh $(WHAT)
+endif
+
 define CLEAN_HELP_INFO
 # Clean up the output of make.
 #

@@ -74,6 +74,20 @@ jobs:
         - sudo apt-get install -y kubectl
       script:
         - travis_retry make e2e
+    - name: "kubernetes e2e test"
+      arch: amd64
+      before_script:
+        - go get github.com/onsi/ginkgo/ginkgo
+        - go get sigs.k8s.io/kind@v0.7.0
+        - go mod vendor
+        - export GOFLAGS=-mod=vendor
+        - sudo apt-get update && sudo apt-get install -y apt-transport-https
+        - curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+        - echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee -a /etc/apt/sources.list.d/kubernetes.list
+        - sudo apt-get update
+        - sudo apt-get install -y kubectl
+      script:
+        - make kubernetes_e2e
     - name: "keadm e2e test"
       arch: amd64
       before_script:
