@@ -256,7 +256,7 @@ kubernetes_e2e:
 	@echo "$$KUBERNETES_E2E_HELP_INFO"
 else
 kubernetes_e2e:
-	bash tests/e2e/scripts/kubernetes_e2e.sh $(WHAT)
+	tests/e2e/scripts/kubernetes_e2e.sh $(WHAT)
 endif
 
 define CLEAN_HELP_INFO
