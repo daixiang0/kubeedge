@@ -23,12 +23,6 @@ E2E_DIR=$(realpath $(dirname $0)/..)
 KUBERNETES_ROOT=$GOPATH/src/k8s.io/kubernetes
 TEST=$1
 
-function cleanup {
-  echo "Cleaning up..."
-
-  kind delete cluster test
-}
-
 prepare_tests() {
   echo "Download kubetest..."
 
@@ -47,6 +41,7 @@ prepare_tests() {
 
   # skip binary build
   ln -s "$(which kubectl)" _output/bin/kubectl
+  ln -s "$(which ginkgo)" _output/bin/ginkgo
 }
 
 start_cluster() {
@@ -59,17 +54,27 @@ run_tests() {
   # docker-config-file flag is not introduced in 1.18.6
   sed -i "/docker-config-file/d" hack/ginkgo-e2e.sh
 
+  local apps_skip_case="--ginkgo.skip=DaemonRestart"
+  local node_skip_case="--ginkgo.skip='Pods Extended'"
+  local storage_skip_case="--ginkgo.skip=nfs|csi-hostpath"
+
   local test_args
-  [[ ${TEST}x == "x" ]] || test_args="-ginkgo.focus=sig-${TEST}"
+  if [[ ${TEST}x == "x" ]]; then
+    test_args="${apps_skip_case} ${node_skip_case} ${storage_skip_case}"
+  else
+    test_args="-ginkgo.focus=sig-${TEST}"
+
+    local skip_case
+    eval skip_case='$'${TEST}_skip_case
+    [[ ${skip_case}x == "x" ]] || test_args+=" ${skip_case}"
+  fi
 
   kubetest --provider=local --test \
-    --test_args="--ginkgo.skip=Slow|Serial|Flaky|Featurei ${test_args}" \
+    --test_args="--ginkgo.skip=Slow|Serial|Flaky|Feature ${test_args}" \
     --check-version-skew=false \
     --down
 }
 
-trap cleanup EXIT
-
-prepare_tests
-start_cluster
+#prepare_tests
+#start_cluster
 run_tests
