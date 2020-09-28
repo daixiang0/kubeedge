@@ -75,6 +75,6 @@ run_tests() {
     --down
 }
 
-#prepare_tests
-#start_cluster
+prepare_tests
+start_cluster
 run_tests
