@@ -61,37 +61,37 @@ jobs:
       script:
         - git checkout .
         - ENABLE_DAEMON=true ./hack/local-up-kubeedge.sh
-        - travis_wait travis_retry $(go env GOPATH)/src/k8s.io/kubernetes/_output/local/go/bin/e2e.test --provider=local --kubeconfig=$HOME/.kube/config --ginkgo.skip="Aggregator|CustomResourceConversionWebhook|consumable" --ginkgo.focus="sig-api-machinery.*Conformance"
+        - travis_wait 120 $(go env GOPATH)/src/k8s.io/kubernetes/_output/local/go/bin/e2e.test --provider=local --kubeconfig=$HOME/.kube/config --ginkgo.skip="Aggregator|CustomResourceConversionWebhook|consumable" --ginkgo.focus="sig-api-machinery.*Conformance"
     - name: "Test conformance about sig-apps"
       script:
         - git checkout .
         - ENABLE_DAEMON=true ./hack/local-up-kubeedge.sh
-        - travis_wait travis_retry $(go env GOPATH)/src/k8s.io/kubernetes/_output/local/go/bin/e2e.test --provider=local --kubeconfig=$HOME/.kube/config --ginkgo.focus="sig-apps.*Conformance"
+        - travis_wait 120 $(go env GOPATH)/src/k8s.io/kubernetes/_output/local/go/bin/e2e.test --provider=local --kubeconfig=$HOME/.kube/config --ginkgo.focus="sig-apps.*Conformance"
     - name: "Test conformance about sig-auth"
       script:
         - git checkout .
         - ENABLE_DAEMON=true ./hack/local-up-kubeedge.sh
-        - travis_wait travis_retry $(go env GOPATH)/src/k8s.io/kubernetes/_output/local/go/bin/e2e.test --provider=local --kubeconfig=$HOME/.kube/config --ginkgo.focus="sig-auth.*Conformance"
+        - travis_wait $(go env GOPATH)/src/k8s.io/kubernetes/_output/local/go/bin/e2e.test --provider=local --kubeconfig=$HOME/.kube/config --ginkgo.focus="sig-auth.*Conformance"
     - name: "Test conformance about sig-cli"
       script:
         - git checkout .
         - ENABLE_DAEMON=true ./hack/local-up-kubeedge.sh
-        - travis_wait travis_retry $(go env GOPATH)/src/k8s.io/kubernetes/_output/local/go/bin/e2e.test --provider=local --kubeconfig=$HOME/.kube/config --ginkgo.skip="should create and stop a working application" --ginkgo.focus="sig-cli.*Conformance"
+        - travis_wait 120 $(go env GOPATH)/src/k8s.io/kubernetes/_output/local/go/bin/e2e.test --provider=local --kubeconfig=$HOME/.kube/config --ginkgo.skip="should create and stop a working application" --ginkgo.focus="sig-cli.*Conformance"
     - name: "Test conformance about sig-network"
       script:
         - git checkout .
         - ENABLE_DAEMON=true ./hack/local-up-kubeedge.sh
-        - travis_wait travis_retry $(go env GOPATH)/src/k8s.io/kubernetes/_output/local/go/bin/e2e.test --provider=local --kubeconfig=$HOME/.kube/config --ginkgo.skip="DNS|env vars|communication|Services" --ginkgo.focus="sig-network.*Conformance"
+        - travis_wait 120 $(go env GOPATH)/src/k8s.io/kubernetes/_output/local/go/bin/e2e.test --provider=local --kubeconfig=$HOME/.kube/config --ginkgo.skip="DNS|env vars|communication|Services" --ginkgo.focus="sig-network.*Conformance"
     - name: "Test conformance about sig-node"
       script:
         - git checkout .
         - ENABLE_DAEMON=true ./hack/local-up-kubeedge.sh
-        - travis_wait travis_retry $(go env GOPATH)/src/k8s.io/kubernetes/_output/local/go/bin/e2e.test --provider=local --kubeconfig=$HOME/.kube/config --ginkgo.skip="env|Events|PreStop|Services|limits" --ginkgo.focus="sig-node.*Conformance"
+        - travis_wait $(go env GOPATH)/src/k8s.io/kubernetes/_output/local/go/bin/e2e.test --provider=local --kubeconfig=$HOME/.kube/config --ginkgo.skip="env|Events|PreStop|Services|limits" --ginkgo.focus="sig-node.*Conformance"
     - name: "Test conformance about sig-storage"
       script:
         - git checkout .
         - ENABLE_DAEMON=true ./hack/local-up-kubeedge.sh
-        - travis_wait travis_retry $(go env GOPATH)/src/k8s.io/kubernetes/_output/local/go/bin/e2e.test --provider=local --kubeconfig=$HOME/.kube/config --ginkgo.skip="optional updates|provide node allocatable|shared volumes" --ginkgo.focus="sig-storage.*Conformance"
+        - travis_wait 120 $(go env GOPATH)/src/k8s.io/kubernetes/_output/local/go/bin/e2e.test --provider=local --kubeconfig=$HOME/.kube/config --ginkgo.skip="optional updates|provide node allocatable|shared volumes" --ginkgo.focus="sig-storage.*Conformance"
     - stage: "Verify vendor, licenses, do lint"
       name: "Verify vendor, licenses, do lint"
       before_script:
