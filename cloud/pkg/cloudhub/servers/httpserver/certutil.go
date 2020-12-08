@@ -45,8 +45,9 @@ func NewSelfSignedCACertDERBytes(key crypto.Signer) ([]byte, error) {
 		Subject: pkix.Name{
 			CommonName: "KubeEdge",
 		},
-		NotBefore: time.Now().UTC(),
-		NotAfter:  time.Now().Add(time.Hour * 24 * 365 * 100),
+		IPAddresses: getIps(hubconfig.Config.AdvertiseAddress),
+		NotBefore:   time.Now().UTC(),
+		NotAfter:    time.Now().Add(time.Hour * 24 * 365 * 100),
 
 		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},

@@ -17,12 +17,37 @@ limitations under the License.
 package cloudstream
 
 import (
+	"context"
+	"crypto/tls"
+	"crypto/x509"
+	"fmt"
+	"io/ioutil"
+	"net"
+	"os"
+	"os/signal"
+	"sync"
+
+	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
+
+	"syscall"
+	"time"
+
+	"github.com/google/uuid"
 	"github.com/kubeedge/beehive/pkg/core"
-	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudstream/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/keepalive"
+	"k8s.io/klog/v2"
+	"sigs.k8s.io/apiserver-network-proxy/konnectivity-client/proto/client"
+	anpserver "sigs.k8s.io/apiserver-network-proxy/pkg/server"
+	"sigs.k8s.io/apiserver-network-proxy/proto/agent"
 )
+
+var udsListenerLock sync.Mutex
+
+const udsName = "/var/lib/kubeedge/proxy.sock"
 
 type cloudStream struct {
 	enable bool
@@ -30,38 +55,150 @@ type cloudStream struct {
 
 func newCloudStream(enable bool) *cloudStream {
 	return &cloudStream{
-		enable: enable,
+		enable: true,
 	}
 }
 
 func Register(controller *v1alpha1.CloudStream) {
 	config.InitConfigure(controller)
-	core.Register(newCloudStream(controller.Enable))
+	core.Register(newCloudStream(true))
 }
 
-func (s *cloudStream) Name() string {
+func (c *cloudStream) Name() string {
 	return modules.CloudStreamModuleName
 }
 
-func (s *cloudStream) Group() string {
+func (c *cloudStream) Group() string {
 	return modules.CloudStreamGroupName
 }
 
-func (s *cloudStream) Start() {
-	// TODO: Will improve in the future
-	ok := <-cloudhub.DoneTLSTunnelCerts
-	if ok {
-		ts := newTunnelServer()
+func (c *cloudStream) Start() {
+	time.Sleep(10 * time.Second)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-		// start new tunnel server
-		go ts.Start()
+	proxyServer := anpserver.NewProxyServer(uuid.New().String(), 1, &anpserver.AgentTokenAuthenticationOptions{})
+	klog.V(1).Infoln("Starting master server for client connections.")
 
-		server := newStreamServer(ts)
-		// start stream server to accept kube-apiserver connection
-		go server.Start()
+	masterStop, err := c.runMasterServer(ctx, proxyServer)
+	if err != nil {
+		klog.Errorf("failed to run the master server: %v", err)
+	}
+
+	klog.V(1).Infoln("Starting agent server for tunnel connections.")
+	err = c.runAgentServer(proxyServer)
+	if err != nil {
+		klog.Errorf("failed to run the agent server: %v", err)
+	}
+
+	stopCh := setupSignalHandler()
+	<-stopCh
+	klog.V(1).Infoln("Shutting down server.")
+
+	if masterStop != nil {
+		masterStop()
 	}
 }
 
-func (s *cloudStream) Enable() bool {
-	return s.enable
+func (c *cloudStream) Enable() bool {
+	return c.enable
+}
+
+type StopFunc func()
+
+func (c *cloudStream) runMasterServer(ctx context.Context, s *anpserver.ProxyServer) (StopFunc, error) {
+	var stop StopFunc
+
+	grpcServer := grpc.NewServer()
+	client.RegisterProxyServiceServer(grpcServer, s)
+	lis, err := getUDSListener(ctx, udsName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get uds listener: %v", err)
+	}
+	go grpcServer.Serve(lis)
+	stop = grpcServer.GracefulStop
+
+	return stop, nil
+}
+
+func getUDSListener(ctx context.Context, udsName string) (net.Listener, error) {
+	udsListenerLock.Lock()
+	defer udsListenerLock.Unlock()
+	oldUmask := syscall.Umask(0007)
+	defer syscall.Umask(oldUmask)
+	var lc net.ListenConfig
+	lis, err := lc.Listen(ctx, "unix", udsName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to listen(unix) name %s: %v", udsName, err)
+	}
+	return lis, nil
+}
+
+func (c *cloudStream) runAgentServer(server *anpserver.ProxyServer) error {
+	var tlsConfig *tls.Config
+	var err error
+	if tlsConfig, err = getTLSConfig(config.Config.TLSTunnelCAFile, config.Config.TLSTunnelCertFile, config.Config.TLSTunnelPrivateKeyFile); err != nil {
+		return err
+	}
+
+	addr := fmt.Sprintf(":%d", 18132)
+	serverOptions := []grpc.ServerOption{
+		grpc.Creds(credentials.NewTLS(tlsConfig)),
+		grpc.KeepaliveParams(keepalive.ServerParameters{Time: 30 * time.Second}),
+	}
+	grpcServer := grpc.NewServer(serverOptions...)
+	agent.RegisterAgentServiceServer(grpcServer, server)
+	lis, err := net.Listen("tcp", addr)
+	if err != nil {
+		return fmt.Errorf("failed to listen on %s: %v", addr, err)
+	}
+	go grpcServer.Serve(lis)
+
+	return nil
+}
+
+var shutdownSignals = []os.Signal{os.Interrupt, syscall.SIGTERM}
+
+func setupSignalHandler() (stopCh <-chan struct{}) {
+	stop := make(chan struct{})
+	c := make(chan os.Signal, 2)
+	signal.Notify(c, shutdownSignals...)
+	go func() {
+		<-c
+		close(stop)
+		<-c
+		os.Exit(1) // second signal. Exit directly.
+	}()
+
+	return stop
+}
+
+func getTLSConfig(caFile, certFile, keyFile string) (*tls.Config, error) {
+	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load X509 key pair %s and %s: %v", certFile, keyFile, err)
+	}
+
+	if caFile == "" {
+		return &tls.Config{Certificates: []tls.Certificate{cert}}, nil
+	}
+
+	caCert, err := ioutil.ReadFile(caFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read cluster CA cert %s: %v", caFile, err)
+	}
+
+	certPool := x509.NewCertPool()
+
+	ok := certPool.AppendCertsFromPEM(caCert)
+	if !ok {
+		return nil, fmt.Errorf("failed to append cluster CA cert to the cert pool")
+	}
+	tlsConfig := &tls.Config{
+		ClientAuth:   tls.RequireAndVerifyClientCert,
+		Certificates: []tls.Certificate{cert},
+		ClientCAs:    certPool,
+	}
+
+	return tlsConfig, nil
 }

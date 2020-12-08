@@ -25,8 +25,11 @@ package edged
 
 import (
 	"bytes"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -111,6 +114,7 @@ import (
 	edgedutil "github.com/kubeedge/kubeedge/edge/pkg/edged/util"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged/util/record"
 	csiplugin "github.com/kubeedge/kubeedge/edge/pkg/edged/volume/csi"
+//	hubconfig "github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/edgecore/v1alpha1"
@@ -401,6 +405,34 @@ func (e *edged) cgroupRoots() []string {
 	return cgroupRoots
 }
 
+func getTLSConfig(caFile, certFile, keyFile string) (*tls.Config, error) {
+	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load X509 key pair %s and %s: %v", certFile, keyFile, err)
+	}
+
+	if caFile == "" {
+		return &tls.Config{Certificates: []tls.Certificate{cert}}, nil
+	}
+
+	certPool := x509.NewCertPool()
+	caCert, err := ioutil.ReadFile(caFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read cluster CA cert %s: %v", caFile, err)
+	}
+	ok := certPool.AppendCertsFromPEM(caCert)
+	if !ok {
+		return nil, fmt.Errorf("failed to append cluster CA cert to the cert pool")
+	}
+	tlsConfig := &tls.Config{
+		ClientAuth:   tls.RequireAndVerifyClientCert,
+		Certificates: []tls.Certificate{cert},
+		ClientCAs:    certPool,
+	}
+
+	return tlsConfig, nil
+}
+
 //newEdged creates new edged object and initialises it
 func newEdged(enable bool) (*edged, error) {
 	backoff := flowcontrol.NewBackOff(backOffPeriod, MaxContainerBackOff)
@@ -466,6 +498,11 @@ func newEdged(enable bool) (*edged, error) {
 		MaxPerPodContainer: int(edgedconfig.Config.MaximumDeadContainersPerPod),
 	}
 
+//	var tlsConfig *tls.Config
+//	if tlsConfig, err = getTLSConfig(hubconfig.Config.TLSCAFile, hubconfig.Config.TLSCertFile, hubconfig.Config.TLSPrivateKeyFile); err != nil {
+//		return nil, err
+//	}
+
 	//create and start the docker shim running as a grpc server
 	if edgedconfig.Config.RemoteRuntimeEndpoint == DockerShimEndpoint ||
 		edgedconfig.Config.RemoteRuntimeEndpoint == DockerShimEndpointDeprecated {
@@ -473,6 +510,7 @@ func newEdged(enable bool) (*edged, error) {
 			StreamCreationTimeout:           streaming.DefaultConfig.StreamCreationTimeout,
 			SupportedRemoteCommandProtocols: streaming.DefaultConfig.SupportedRemoteCommandProtocols,
 			SupportedPortForwardProtocols:   streaming.DefaultConfig.SupportedPortForwardProtocols,
+	//		TLSConfig:                       tlsConfig,
 		}
 
 		DockerClientConfig := &dockershim.ClientConfig{
@@ -1426,3 +1464,4 @@ func convertStrToIP(s string) []net.IP {
 	}
 	return ips
 }
+

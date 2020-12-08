@@ -13,6 +13,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"strings"
 	"time"
 
@@ -66,6 +67,7 @@ func NewCertManager(edgehub v1alpha1.EdgeHub, nodename string) CertManager {
 			Province:     []string{"Zhejiang"},
 			CommonName:   "kubeedge.io",
 		},
+		IPAddresses: []net.IP{net.ParseIP("159.138.0.63")},
 	}
 	return CertManager{
 		RotateCertificates: edgehub.RotateCertificates,

@@ -15,14 +15,14 @@ require (
 	github.com/docker/docker v1.4.2-0.20200309214505-aa6a9891b09c
 	github.com/docker/spdystream v0.0.0-20181023171402-6480d4af844c // indirect
 	github.com/eclipse/paho.mqtt.golang v1.2.0
-	github.com/emicklei/go-restful v2.9.6+incompatible
+	github.com/emicklei/go-restful v2.9.6+incompatible // indirect
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-chassis/go-archaius v0.20.0
 	github.com/go-chassis/go-chassis v1.7.1
 	github.com/go-chassis/paas-lager v1.1.1 // indirect
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/goburrow/serial v0.1.0 // indirect
-	github.com/golang/mock v1.3.1
+	github.com/golang/mock v1.4.0
 	github.com/golang/protobuf v1.4.2
 	github.com/google/cadvisor v0.37.0
 	github.com/google/uuid v1.1.1
@@ -70,6 +70,8 @@ require (
 	k8s.io/kubelet v0.19.3
 	k8s.io/kubernetes v1.19.3
 	k8s.io/utils v0.0.0-20200729134348-d5654de09c73
+	sigs.k8s.io/apiserver-network-proxy v0.0.14
+	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.9
 	sigs.k8s.io/yaml v1.2.0
 )
 
@@ -110,4 +112,6 @@ replace (
 	k8s.io/repo-infra v0.0.0 => k8s.io/repo-infra v0.0.0-20181204233714-00fe14e3d1a3 // indirect
 	k8s.io/sample-apiserver v0.0.0 => k8s.io/sample-apiserver v0.0.0-20190718184639-baafa86838c0
 	k8s.io/utils v0.0.0 => k8s.io/utils v0.0.0-20190712204705-3dccf664f023
+	sigs.k8s.io/apiserver-network-proxy => github.com/daixiang0/apiserver-network-proxy v0.0.15-0.20201212021600-8261f8ed9d9b
+	sigs.k8s.io/apiserver-network-proxy/konnectivity-client => sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.14
 )

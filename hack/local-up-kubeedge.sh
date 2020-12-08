@@ -48,7 +48,7 @@ function uninstall_kubeedge {
   rm -rf /tmp/etc/kubeedge /tmp/var/lib/kubeedge
 
   # delete iptables rule
-  sudo iptables -t nat -D PREROUTING -p tcp --dport 10350 -j REDIRECT --to-port 10003
+  sudo iptables -t nat -D PREROUTING -p tcp --dport 10350 -j REDIRECT --to-port 18132
 }
 
 # clean up
@@ -95,14 +95,14 @@ function start_cloudcore {
   ${CLOUD_BIN} --minconfig >  ${CLOUD_CONFIGFILE}
   sed -i '/modules:/a\  cloudStream:\n    enable: true\n    streamPort: 10003\n    tlsStreamCAFile: /etc/kubeedge/ca/streamCA.crt\n    tlsStreamCertFile: /etc/kubeedge/certs/stream.crt\n    tlsStreamPrivateKeyFile: /etc/kubeedge/certs/stream.key\n    tlsTunnelCAFile: /etc/kubeedge/ca/rootCA.crt\n    tlsTunnelCertFile: /etc/kubeedge/certs/server.crt\n    tlsTunnelPrivateKeyFile: /etc/kubeedge/certs/server.key\n    tunnelPort: 10004' ${CLOUD_CONFIGFILE}
   sed -i -e "s|kubeConfig: .*|kubeConfig: ${KUBECONFIG}|g" \
+    -e "/advertiseAddress/a\    - 159.138.0.63" \
     -e "s|/etc/|/tmp/etc/|g" ${CLOUD_CONFIGFILE}
   CLOUDCORE_LOG=${LOG_DIR}/cloudcore.log
   echo "start cloudcore..."
-  nohup sudo ${CLOUD_BIN} --config=${CLOUD_CONFIGFILE} > "${CLOUDCORE_LOG}" 2>&1 &
+  nohup sudo GRPC_GO_LOG_VERBOSITY_LEVEL=99 GRPC_GO_LOG_SEVERITY_LEVEL=info ${CLOUD_BIN} -v 1 --config=${CLOUD_CONFIGFILE} > "${CLOUDCORE_LOG}" 2>&1 &
   CLOUDCORE_PID=$!
 
-  sudo iptables -t nat -A PREROUTING -p tcp --dport 10350 -j REDIRECT --to-port 10003
-
+  sudo iptables -t nat -A PREROUTING -p tcp --dport 10350 -j REDIRECT --to-port 18132
   # ensure tokensecret is generated
   while true; do
       sleep 3
@@ -127,7 +127,7 @@ function start_edgecore {
 
   echo "start edgecore..."
   export CHECK_EDGECORE_ENVIRONMENT="false"
-  nohup sudo -E ${EDGE_BIN} --config=${EDGE_CONFIGFILE} > "${EDGECORE_LOG}" 2>&1 &
+  nohup sudo -E GRPC_GO_LOG_VERBOSITY_LEVEL=99 GRPC_GO_LOG_SEVERITY_LEVEL=info ${EDGE_BIN} -v 2 --config=${EDGE_CONFIGFILE} > "${EDGECORE_LOG}" 2>&1 &
   EDGECORE_PID=$!
 }
 
@@ -173,7 +173,7 @@ function generate_streamserver_cert {
   docker cp ${CLUSTER_NAME}-control-plane:/etc/kubernetes/pki/ca.key $K8SCA_KEY_FILE
   cp /tmp/etc/kubernetes/pki/ca.crt /tmp/etc/kubeedge/ca/streamCA.crt
 
-  SUBJECTALTNAME="subjectAltName = IP.1:127.0.0.1"
+  SUBJECTALTNAME="subjectAltName = IP.1:127.0.0.1, IP.2:159.138.0.63"
   echo $SUBJECTALTNAME > /tmp/server-extfile.cnf
 
   touch ~/.rnd

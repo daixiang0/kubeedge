@@ -159,16 +159,6 @@ func ValidateModuleCloudStream(d v1alpha1.CloudStream) field.ErrorList {
 		klog.Warningf("TLSTunnelCAFile does not exist in %s, will load from secret", d.TLSTunnelCAFile)
 	}
 
-	if !utilvalidation.FileIsExist(d.TLSStreamPrivateKeyFile) {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSStreamPrivateKeyFile"), d.TLSStreamPrivateKeyFile, "TLSStreamPrivateKeyFile not exist"))
-	}
-	if !utilvalidation.FileIsExist(d.TLSStreamCertFile) {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSStreamCertFile"), d.TLSStreamCertFile, "TLSStreamCertFile not exist"))
-	}
-	if !utilvalidation.FileIsExist(d.TLSStreamCAFile) {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSStreamCAFile"), d.TLSStreamCAFile, "TLSStreamCAFile not exist"))
-	}
-
 	return allErrs
 }
 

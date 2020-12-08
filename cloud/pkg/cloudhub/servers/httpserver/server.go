@@ -230,6 +230,7 @@ func signCerts(subInfo pkix.Name, pbKey crypto.PublicKey) ([]byte, error) {
 		return nil, fmt.Errorf("unable to ParseCertificate: %v", err)
 	}
 
+	cfgs.AltNames.IPs = caCert.IPAddresses
 	caKeyDER := hubconfig.Config.CaKey
 	caKey, err := x509.ParseECPrivateKey(caKeyDER)
 	if err != nil {

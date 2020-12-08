@@ -13,4 +13,6 @@ const (
 	EdgeStreamModuleName = "edgestream"
 	// DeviceTwinModuleName name
 	DeviceTwinModuleName = "twin"
+
+	EdgeProxyModuleName = "edgeproxy"
 )
