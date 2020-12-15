@@ -47,7 +47,8 @@ import (
 
 var udsListenerLock sync.Mutex
 
-const udsName = "/var/lib/kubeedge/proxy.sock"
+const udsName = ""
+//const udsName = "/var/lib/kubeedge/proxy.sock"
 
 type cloudStream struct {
 	enable bool
@@ -107,6 +108,14 @@ func (c *cloudStream) Enable() bool {
 type StopFunc func()
 
 func (c *cloudStream) runMasterServer(ctx context.Context, s *anpserver.ProxyServer) (StopFunc, error) {
+	if udsName != "" {
+		return c.runUDSMasterServer(ctx, s)
+	}
+	return c.runMTLSMasterServer(ctx, s)
+
+}
+
+func (c *cloudStream) runUDSMasterServer(ctx context.Context, s *anpserver.ProxyServer) (StopFunc, error) {
 	var stop StopFunc
 
 	grpcServer := grpc.NewServer()
@@ -132,6 +141,30 @@ func getUDSListener(ctx context.Context, udsName string) (net.Listener, error) {
 		return nil, fmt.Errorf("failed to listen(unix) name %s: %v", udsName, err)
 	}
 	return lis, nil
+}
+
+func (c *cloudStream) runMTLSMasterServer(ctx context.Context, s *anpserver.ProxyServer) (StopFunc, error) {
+	var stop StopFunc
+
+	var tlsConfig *tls.Config
+	var err error
+	if tlsConfig, err = getTLSConfig(config.Config.TLSTunnelCAFile, config.Config.TLSTunnelCertFile, config.Config.TLSTunnelPrivateKeyFile); err != nil {
+		return nil, err
+	}
+
+	addr := fmt.Sprintf(":%d", 18090)
+
+	serverOption := grpc.Creds(credentials.NewTLS(tlsConfig))
+	grpcServer := grpc.NewServer(serverOption)
+	client.RegisterProxyServiceServer(grpcServer, s)
+	lis, err := net.Listen("tcp", addr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to listen on %s: %v", addr, err)
+	}
+	go grpcServer.Serve(lis)
+	stop = grpcServer.GracefulStop
+
+	return stop, nil
 }
 
 func (c *cloudStream) runAgentServer(server *anpserver.ProxyServer) error {
@@ -202,3 +235,4 @@ func getTLSConfig(caFile, certFile, keyFile string) (*tls.Config, error) {
 
 	return tlsConfig, nil
 }
+

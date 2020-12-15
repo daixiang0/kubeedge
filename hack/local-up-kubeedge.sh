@@ -48,7 +48,7 @@ function uninstall_kubeedge {
   rm -rf /tmp/etc/kubeedge /tmp/var/lib/kubeedge
 
   # delete iptables rule
-  sudo iptables -t nat -D PREROUTING -p tcp --dport 10350 -j REDIRECT --to-port 18132
+  sudo iptables -t nat -D PREROUTING -p tcp --dport 10350 -j REDIRECT --to-port 18090
 }
 
 # clean up
@@ -102,7 +102,7 @@ function start_cloudcore {
   nohup sudo GRPC_GO_LOG_VERBOSITY_LEVEL=99 GRPC_GO_LOG_SEVERITY_LEVEL=info ${CLOUD_BIN} -v 1 --config=${CLOUD_CONFIGFILE} > "${CLOUDCORE_LOG}" 2>&1 &
   CLOUDCORE_PID=$!
 
-  sudo iptables -t nat -A PREROUTING -p tcp --dport 10350 -j REDIRECT --to-port 18132
+  sudo iptables -t nat -A PREROUTING -p tcp --dport 10350 -j REDIRECT --to-port 18090
   # ensure tokensecret is generated
   while true; do
       sleep 3
