@@ -23,6 +23,7 @@ import (
 	"io/ioutil"
 	"net"
 	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -36,6 +37,8 @@ import (
 	"sigs.k8s.io/apiserver-network-proxy/proto/agent"
 	"sigs.k8s.io/apiserver-network-proxy/proto/header"
 )
+
+const localAddress = "127.0.0.1:10350"
 
 // connContext tracks a connection from agent to node network.
 type connContext struct {
@@ -105,9 +108,36 @@ type AgentClient struct {
 	// file path contains service account token.
 	// token's value is auto-rotated by kubernetes, based on projected volume configuration.
 	serviceAccountTokenPath string
+
+	// list of local NICs
+	nics []string
 }
 
 func newAgentClient(address, agentID string, cs *ClientSet, opts ...grpc.DialOption) (*AgentClient, int, error) {
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		return nil, 0, err
+	}
+	nics := make([]string, 0)
+	for _, i := range ifaces {
+		addrs, err := i.Addrs()
+		if err != nil {
+			return nil, 0, err
+		}
+		for _, addr := range addrs {
+			var ip net.IP
+			switch v := addr.(type) {
+			case *net.IPNet:
+				ip = v.IP
+			case *net.IPAddr:
+				ip = v.IP
+			}
+			if ip != nil {
+				nics = append(nics, ip.String())
+			}
+		}
+	}
+
 	a := &AgentClient{
 		cs:                      cs,
 		address:                 address,
@@ -117,6 +147,7 @@ func newAgentClient(address, agentID string, cs *ClientSet, opts ...grpc.DialOpt
 		stopCh:                  make(chan struct{}),
 		serviceAccountTokenPath: cs.serviceAccountTokenPath,
 		connManager:             newConnectionManager(),
+		nics:                    nics,
 	}
 	serverCount, err := a.Connect()
 	if err != nil {
@@ -286,8 +317,18 @@ func (a *AgentClient) Serve() {
 			dialReq := pkt.GetDialRequest()
 			resp.GetDialResponse().Random = dialReq.Random
 
+
+			requestAdress := strings.Split(dialReq.Address, ":")[0]
+			dialAddress := dialReq.Address
+			for _, i := range a.nics {
+				if requestAdress == i {
+					dialAddress = localAddress
+					break
+				}
+			}
+
 			start := time.Now()
-			conn, err := net.Dial(dialReq.Protocol, "127.0.0.1:10350")
+			conn, err := net.Dial(dialReq.Protocol, dialAddress)
 			if err != nil {
 				resp.GetDialResponse().Error = err.Error()
 				if err := a.Send(resp); err != nil {

@@ -379,7 +379,7 @@ func (s *ProxyServer) validateAuthToken(token string) error {
 			Audiences: []string{s.AgentAuthenticationOptions.AuthenticationAudience},
 		},
 	}
-	r, err := s.AgentAuthenticationOptions.KubernetesClient.AuthenticationV1().TokenReviews().Create(context.TODO(), trReq, metav1.CreateOptions{})
+	r, err := s.AgentAuthenticationOptions.KubernetesClient.AuthenticationV1().TokenReviews().Create(context.Background(), trReq, metav1.CreateOptions{})
 	if err != nil {
 		return fmt.Errorf("Failed to authenticate request. err:%v", err)
 	}

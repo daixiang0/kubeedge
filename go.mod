@@ -112,6 +112,6 @@ replace (
 	k8s.io/repo-infra v0.0.0 => k8s.io/repo-infra v0.0.0-20181204233714-00fe14e3d1a3 // indirect
 	k8s.io/sample-apiserver v0.0.0 => k8s.io/sample-apiserver v0.0.0-20190718184639-baafa86838c0
 	k8s.io/utils v0.0.0 => k8s.io/utils v0.0.0-20190712204705-3dccf664f023
-	sigs.k8s.io/apiserver-network-proxy => github.com/daixiang0/apiserver-network-proxy v0.0.15-0.20201212021600-8261f8ed9d9b
+	sigs.k8s.io/apiserver-network-proxy => github.com/daixiang0/apiserver-network-proxy v0.0.15-0.20201215022657-cbbdbdaad9ce
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client => sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.14
 )
