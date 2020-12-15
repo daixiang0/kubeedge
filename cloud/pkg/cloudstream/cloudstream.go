@@ -47,8 +47,8 @@ import (
 
 var udsListenerLock sync.Mutex
 
-const udsName = ""
-//const udsName = "/var/lib/kubeedge/proxy.sock"
+//const udsName = ""
+const udsName = "/var/lib/kubeedge/proxy.sock"
 
 type cloudStream struct {
 	enable bool
